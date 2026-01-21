@@ -60,9 +60,35 @@ bindAspectSync();
 const { detectLiveStream, canSaveProgress } = createLiveDetector(art);
 
 // -------------------------
+// Proxy
+// -------------------------
+const PROXY_PREFIX = "https://cors.144666.xyz/";
+const proxyToggle = $("#proxyToggle");
+const PROXY_STORAGE_KEY = "artplayer:useProxy";
+
+if (proxyToggle) {
+  const saved = localStorage.getItem(PROXY_STORAGE_KEY);
+  proxyToggle.checked = saved === "1";
+
+  proxyToggle.addEventListener("change", () => {
+    localStorage.setItem(PROXY_STORAGE_KEY, proxyToggle.checked ? "1" : "0");
+    art.notice.show = proxyToggle.checked ? "已开启代理播放" : "已关闭代理播放";
+  });
+}
+
+function withProxy(url) {
+  const cleaned = (url || "").trim();
+  if (!cleaned) return "";
+  if (!proxyToggle?.checked) return cleaned;
+  if (cleaned.startsWith(PROXY_PREFIX)) return cleaned;
+  return `${PROXY_PREFIX}${cleaned}`;
+}
+
+// -------------------------
 // State
 // -------------------------
 let currentUrl = "";
+let currentPlayUrl = "";
 let currentType = "auto";
 let isLiveStream = false;
 
@@ -138,12 +164,13 @@ art.on("destroy", () => {
 // -------------------------
 async function loadUrl(url) {
   currentUrl = url;
+  currentPlayUrl = withProxy(url);
   currentType = inferType(url);
 
   setBadge($("#typeBadge"), "type: " + currentType);
 
-  if (currentType === "auto") art.switchUrl(url);
-  else art.switchUrl(url, currentType);
+  if (currentType === "auto") art.switchUrl(currentPlayUrl);
+  else art.switchUrl(currentPlayUrl, currentType);
 
   toastStatus("加载中…");
 
