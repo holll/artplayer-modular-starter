@@ -8,6 +8,7 @@ import { ensureProgressLine, setProgressLine } from "./progressLine.js";
 import { playM3u8, playFlv, playMpd } from "./customTypes.js";
 import { createAspectSync } from "./aspectRatio.js";
 import { createLiveDetector } from "./liveDetect.js";
+import presets from "./presets.json" assert { type: "json" };
 
 // -------------------------
 // init player
@@ -236,13 +237,6 @@ $("#urlInput").addEventListener("input", () => {
 // -------------------------
 // Presets
 // -------------------------
-const presets = [
-  { name: "MP4 示例", sub: "https://.../video.mp4", url: "https://example.com/video.mp4" },
-  { name: "HLS 示例", sub: "https://.../index.m3u8", url: "https://example.com/index.m3u8" },
-  { name: "FLV 示例", sub: "https://.../live.flv", url: "https://example.com/live.flv" },
-  { name: "DASH 示例", sub: "https://.../manifest.mpd", url: "https://example.com/manifest.mpd" },
-];
-
 const list = $("#presetList");
 presets.forEach((p) => {
   const el = document.createElement("div");

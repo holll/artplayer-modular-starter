@@ -34,6 +34,7 @@
 │  ├─ customTypes.js     # HLS/FLV/DASH 扩展
 │  ├─ aspectRatio.js     # 比例同步
 │  ├─ liveDetect.js      # 直播检测
+│  ├─ presets.json       # 示例地址配置
 │  └─ vendors/           # ArtPlayer 及播放依赖
 ├─ fonts/
 └─ favicon.ico

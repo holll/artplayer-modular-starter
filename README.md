@@ -36,6 +36,7 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 │  ├─ customTypes.js     # HLS/FLV/DASH hooks
 │  ├─ aspectRatio.js     # Aspect ratio sync
 │  ├─ liveDetect.js      # Live stream detection
+│  ├─ presets.json       # Demo URL presets
 │  └─ vendors/           # ArtPlayer + playback libs
 ├─ fonts/
 └─ favicon.ico
