@@ -23,19 +23,23 @@
 ```text
 .
 ├─ index.html
-├─ app.css
-├─ main.js
-├─ player/
-│  ├─ init.js        # ArtPlayer 初始化
-│  ├─ resume.js      # 续播 / 进度恢复逻辑
-│  └─ storage.js     # LocalStorage 封装
-├─ ui/
-│  ├─ modal.js       # 续播确认弹窗
-│  └─ progress.js    # 最近播放进度提示
-└─ assets/
+├─ css/
+├─ js/
+│  ├─ main.js            # 应用入口
+│  ├─ dom.js             # DOM 工具
+│  ├─ utils.js           # 通用工具
+│  ├─ progressStore.js   # IndexedDB 进度存储
+│  ├─ resumeModal.js     # 续播弹窗
+│  ├─ progressLine.js    # 最近播放进度提示
+│  ├─ customTypes.js     # HLS/FLV/DASH 扩展
+│  ├─ aspectRatio.js     # 比例同步
+│  ├─ liveDetect.js      # 直播检测
+│  └─ vendors/           # ArtPlayer 及播放依赖
+├─ fonts/
+└─ favicon.ico
 ```
 
-> 目录结构刻意保持「扁平 + 可读」，不引入框架也能长期维护。
+> JS 结构合并到同一层级（仅保留 `vendors` 子目录），减少层级更易维护。
 
 ---
 

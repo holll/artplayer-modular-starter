@@ -25,19 +25,23 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 ```text
 .
 ├─ index.html
-├─ app.css
-├─ main.js
-├─ player/
-│  ├─ init.js        # ArtPlayer initialization
-│  ├─ resume.js      # Resume / continue logic
-│  └─ storage.js     # LocalStorage helpers
-├─ ui/
-│  ├─ modal.js       # Resume modal UI
-│  └─ progress.js    # Last-played progress line
-└─ assets/
+├─ css/
+├─ js/
+│  ├─ main.js            # App entry
+│  ├─ dom.js             # DOM helpers
+│  ├─ utils.js           # Shared utils
+│  ├─ progressStore.js   # IndexedDB progress storage
+│  ├─ resumeModal.js     # Resume modal UI
+│  ├─ progressLine.js    # Last-played progress line
+│  ├─ customTypes.js     # HLS/FLV/DASH hooks
+│  ├─ aspectRatio.js     # Aspect ratio sync
+│  ├─ liveDetect.js      # Live stream detection
+│  └─ vendors/           # ArtPlayer + playback libs
+├─ fonts/
+└─ favicon.ico
 ```
 
-> The structure is intentionally flat and readable — no framework required.
+> The JS is kept in a single folder (plus `vendors`) to reduce nesting and stay easy to scan.
 
 ---
 

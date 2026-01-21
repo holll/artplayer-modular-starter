@@ -1,13 +1,13 @@
 /* global Artplayer */
 
-import { $ } from "./core/dom.js";
-import { inferType, setBadge, clamp, formatTime } from "./core/utils.js";
-import { dbGet, dbPut, dbDel } from "./data/progressStore.js";
-import { ensureResumeUI, showResumeModal } from "./ui/resumeModal.js";
-import { ensureProgressLine, setProgressLine } from "./ui/progressLine.js";
-import { playM3u8, playFlv, playMpd } from "./player/customTypes.js";
-import { createAspectSync } from "./player/aspectRatio.js";
-import { createLiveDetector } from "./player/liveDetect.js";
+import { $ } from "./dom.js";
+import { inferType, setBadge, clamp, formatTime } from "./utils.js";
+import { dbGet, dbPut, dbDel } from "./progressStore.js";
+import { ensureResumeUI, showResumeModal } from "./resumeModal.js";
+import { ensureProgressLine, setProgressLine } from "./progressLine.js";
+import { playM3u8, playFlv, playMpd } from "./customTypes.js";
+import { createAspectSync } from "./aspectRatio.js";
+import { createLiveDetector } from "./liveDetect.js";
 
 // -------------------------
 // init player
