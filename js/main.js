@@ -8,7 +8,16 @@ import { ensureProgressLine, setProgressLine } from "./progressLine.js";
 import { playM3u8, playFlv, playMpd } from "./customTypes.js";
 import { createAspectSync } from "./aspectRatio.js";
 import { createLiveDetector } from "./liveDetect.js";
-import presets from "./presets.json" assert { type: "json" };
+async function loadPresets() {
+  try {
+    const res = await fetch("./js/presets.json");
+    if (!res.ok) throw new Error("Failed to load presets");
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (_) {
+    return [];
+  }
+}
 
 // -------------------------
 // init player
@@ -238,25 +247,29 @@ $("#urlInput").addEventListener("input", () => {
 // Presets
 // -------------------------
 const list = $("#presetList");
-presets.forEach((p) => {
-  const el = document.createElement("div");
-  el.className = "item";
-  el.innerHTML = `
-    <div class="meta">
-      <div class="name">${p.name}</div>
-      <div class="sub">${p.sub}</div>
-    </div>
-    <div class="badge preset-badge" data-url="${p.url}">填充</div>
-  `;
+loadPresets().then((presets) => {
+  presets.forEach((p) => {
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="meta">
+        <div class="name">${p.name}</div>
+        <div class="sub">${p.sub}</div>
+      </div>
+      <div class="badge preset-badge" data-url="${p.url}">填充</div>
+    `;
 
-  el.addEventListener("click", () => {
-    $("#urlInput").value = p.url;
-    $("#urlInput").focus();
-    art.notice.show = "已填充示例地址（请替换为可用链接）";
-    $("#urlInput").dispatchEvent(new Event("input"));
+    el.addEventListener("click", () => {
+      $("#urlInput").value = p.url;
+      $("#urlInput").focus();
+      art.notice.show = "已填充示例地址（请替换为可用链接）";
+      $("#urlInput").dispatchEvent(new Event("input"));
+    });
+
+    list.appendChild(el);
   });
 
-  list.appendChild(el);
+  refreshPresetBadges();
 });
 
 async function refreshPresetBadges() {
@@ -277,5 +290,4 @@ async function refreshPresetBadges() {
   }
 }
 
-refreshPresetBadges();
 toastStatus("未加载");
