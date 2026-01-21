@@ -1,4 +1,4 @@
-import { safeUrlKey } from "../core/utils.js";
+import { safeUrlKey } from "./utils.js";
 
 const DB_NAME = "artplayer_progress_db";
 const DB_VERSION = 1;

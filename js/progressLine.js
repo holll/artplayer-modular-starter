@@ -1,5 +1,5 @@
-import { $, } from "../core/dom.js";
-import { formatTime } from "../core/utils.js";
+import { $ } from "./dom.js";
+import { formatTime } from "./utils.js";
 
 export function ensureProgressLine({ onClear }) {
   if ($("#lastProgressLine")) return;

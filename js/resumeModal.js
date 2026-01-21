@@ -1,4 +1,4 @@
-import { $ } from "../core/dom.js";
+import { $ } from "./dom.js";
 
 export function ensureResumeUI() {
   if ($("#resumeOverlay")) return;

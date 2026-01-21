@@ -1,13 +1,23 @@
 /* global Artplayer */
 
-import { $ } from "./core/dom.js";
-import { inferType, setBadge, clamp, formatTime } from "./core/utils.js";
-import { dbGet, dbPut, dbDel } from "./data/progressStore.js";
-import { ensureResumeUI, showResumeModal } from "./ui/resumeModal.js";
-import { ensureProgressLine, setProgressLine } from "./ui/progressLine.js";
-import { playM3u8, playFlv, playMpd } from "./player/customTypes.js";
-import { createAspectSync } from "./player/aspectRatio.js";
-import { createLiveDetector } from "./player/liveDetect.js";
+import { $ } from "./dom.js";
+import { inferType, setBadge, clamp, formatTime } from "./utils.js";
+import { dbGet, dbPut, dbDel } from "./progressStore.js";
+import { ensureResumeUI, showResumeModal } from "./resumeModal.js";
+import { ensureProgressLine, setProgressLine } from "./progressLine.js";
+import { playM3u8, playFlv, playMpd } from "./customTypes.js";
+import { createAspectSync } from "./aspectRatio.js";
+import { createLiveDetector } from "./liveDetect.js";
+async function loadPresets() {
+  try {
+    const res = await fetch("./js/presets.json");
+    if (!res.ok) throw new Error("Failed to load presets");
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (_) {
+    return [];
+  }
+}
 
 // -------------------------
 // init player
@@ -236,33 +246,30 @@ $("#urlInput").addEventListener("input", () => {
 // -------------------------
 // Presets
 // -------------------------
-const presets = [
-  { name: "MP4 示例", sub: "https://.../video.mp4", url: "https://example.com/video.mp4" },
-  { name: "HLS 示例", sub: "https://.../index.m3u8", url: "https://example.com/index.m3u8" },
-  { name: "FLV 示例", sub: "https://.../live.flv", url: "https://example.com/live.flv" },
-  { name: "DASH 示例", sub: "https://.../manifest.mpd", url: "https://example.com/manifest.mpd" },
-];
-
 const list = $("#presetList");
-presets.forEach((p) => {
-  const el = document.createElement("div");
-  el.className = "item";
-  el.innerHTML = `
-    <div class="meta">
-      <div class="name">${p.name}</div>
-      <div class="sub">${p.sub}</div>
-    </div>
-    <div class="badge preset-badge" data-url="${p.url}">填充</div>
-  `;
+loadPresets().then((presets) => {
+  presets.forEach((p) => {
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="meta">
+        <div class="name">${p.name}</div>
+        <div class="sub">${p.sub}</div>
+      </div>
+      <div class="badge preset-badge" data-url="${p.url}">填充</div>
+    `;
 
-  el.addEventListener("click", () => {
-    $("#urlInput").value = p.url;
-    $("#urlInput").focus();
-    art.notice.show = "已填充示例地址（请替换为可用链接）";
-    $("#urlInput").dispatchEvent(new Event("input"));
+    el.addEventListener("click", () => {
+      $("#urlInput").value = p.url;
+      $("#urlInput").focus();
+      art.notice.show = "已填充示例地址（请替换为可用链接）";
+      $("#urlInput").dispatchEvent(new Event("input"));
+    });
+
+    list.appendChild(el);
   });
 
-  list.appendChild(el);
+  refreshPresetBadges();
 });
 
 async function refreshPresetBadges() {
@@ -283,5 +290,4 @@ async function refreshPresetBadges() {
   }
 }
 
-refreshPresetBadges();
 toastStatus("未加载");
