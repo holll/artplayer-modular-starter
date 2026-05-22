@@ -1,0 +1,18 @@
+# WebStorm / JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Node
+node_modules/
+
+# Dev / build
+dist/

@@ -63,6 +63,7 @@ const { detectLiveStream, canSaveProgress } = createLiveDetector(art);
 // State
 // -------------------------
 let currentUrl = "";
+let currentPlayUrl = "";
 let currentType = "auto";
 let isLiveStream = false;
 
@@ -90,7 +91,10 @@ function toastStatus(text) {
 
 art.on("ready", () => toastStatus("就绪"));
 art.on("play", () => toastStatus("播放中"));
-art.on("pause", () => toastStatus("已暂停"));
+art.on("pause", () => {
+  if (!currentUrl) return; // 已停止，不覆盖 toast
+  toastStatus("已暂停");
+});
 art.on("error", () => toastStatus("播放错误"));
 
 // -------------------------
@@ -138,12 +142,13 @@ art.on("destroy", () => {
 // -------------------------
 async function loadUrl(url) {
   currentUrl = url;
+  currentPlayUrl = url;
   currentType = inferType(url);
 
   setBadge($("#typeBadge"), "type: " + currentType);
 
-  if (currentType === "auto") art.switchUrl(url);
-  else art.switchUrl(url, currentType);
+  if (currentType === "auto") art.switchUrl(currentPlayUrl);
+  else art.switchUrl(currentPlayUrl, currentType);
 
   toastStatus("加载中…");
 
@@ -205,9 +210,19 @@ $("#playBtn").addEventListener("click", () => {
 
 $("#stopBtn").addEventListener("click", () => {
   try {
-    art.pause();
-    art.seek = 0;
+    // 彻底停止：卸载所有视频源
+    if (art.__hls) { try { art.__hls.destroy(); } catch (_) {}; art.__hls = null; }
+    if (art.__flv) { try { art.__flv.destroy(); } catch (_) {}; art.__flv = null; }
+    if (art.__dash) { try { art.__dash.reset(); } catch (_) {}; art.__dash = null; }
+    currentUrl = "";
+    currentPlayUrl = "";
+    currentType = "auto";
+    isLiveStream = false;
+    try { art.pause(); } catch (_) {}
+    try { art.video.removeAttribute("src"); art.video.load(); } catch (_) {}
     toastStatus("已停止");
+    setBadge($("#typeBadge"), "type: -");
+    setProgressLine(null);
   } catch (_) {}
 });
 
@@ -220,7 +235,7 @@ $("#shotBtn").addEventListener("click", () => {
     art.screenshot = true;
     art.notice.show = "已截图（若浏览器阻止下载，请检查设置）";
   } catch (_) {
-    art.notice.show = "截图失败";
+    art.notice.show = "截图失败（请检查浏览器是否阻止下载）";
   }
 });
 

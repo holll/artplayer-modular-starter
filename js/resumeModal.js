@@ -58,6 +58,8 @@ export function showResumeModal({ subText = "", hintText = "", onContinue, onRes
 
   overlay.classList.remove("is-hidden");
   document.body.classList.add("modal-open");
+  // 聚焦到"继续播放"按钮
+  requestAnimationFrame(() => { c2.focus(); });
 }
 
 export function hideResumeModal() {
