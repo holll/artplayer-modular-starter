@@ -82,6 +82,7 @@ body{
   grid-template-columns: 1.7fr .9fr;
   gap: 14px;
   align-items: stretch;
+  scroll-margin-top: 20px; /* 锚点跳转（skip-link）预留顶距 */
 }
 
 .card{
@@ -155,7 +156,7 @@ input[type="text"]{
   transition: border-color .15s ease;
   touch-action: manipulation;
 }
-input[type="text"]:focus{ border-color: rgba(255,255,255,.24); }
+input[type="text"]:focus-visible{ border-color: rgba(255,255,255,.24); }
 
 .btn{
   border: 1px solid rgba(255,255,255,.14);
@@ -191,6 +192,9 @@ input[type="text"]:focus{ border-color: rgba(255,255,255,.24); }
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.05);
   cursor:pointer;
+  font: inherit;      /* button 默认不继承字体，恢复 body 字体 */
+  text-align: left;   /* 避免 button 默认居中 */
+  color: inherit;     /* 继承文本色 */
   transition: transform .08s ease, border-color .15s ease, background .15s ease;
   touch-action: manipulation;
 }

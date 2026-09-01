@@ -60,9 +60,9 @@ const { detectLiveStream } = createLiveDetector(art);
 // State
 // -------------------------
 let currentUrl = "";
-let currentPlayUrl = "";
 let currentType = "auto";
 let isLiveStream = false;
+let loadToken = 0; // 单调递增，标记最近一次 loadUrl，用于丢弃旧回调
 
 // -------------------------
 // Status
@@ -83,18 +83,19 @@ art.on("error", () => toastStatus("播放错误"));
 // Load URL
 // -------------------------
 async function loadUrl(url) {
+  const token = ++loadToken; // 本次加载的令牌
   currentUrl = url;
-  currentPlayUrl = url;
   currentType = inferType(url);
 
   setBadge($("#typeBadge"), "type: " + currentType);
 
-  if (currentType === "auto") art.switchUrl(currentPlayUrl);
-  else art.switchUrl(currentPlayUrl, currentType);
+  if (currentType === "auto") art.switchUrl(url);
+  else art.switchUrl(url, currentType);
 
   toastStatus("加载中…");
 
   const onReady = () => {
+    if (token !== loadToken) return; // 已被更新的加载取代，丢弃旧回调
     isLiveStream = detectLiveStream(currentType);
     const badgeText = isLiveStream ? `type: ${currentType} · LIVE` : `type: ${currentType}`;
     setBadge($("#typeBadge"), badgeText);
@@ -120,7 +121,6 @@ $("#stopBtn").addEventListener("click", () => {
     if (art.__flv) { try { art.__flv.destroy(); } catch (_) {}; art.__flv = null; }
     if (art.__dash) { try { art.__dash.reset(); } catch (_) {}; art.__dash = null; }
     currentUrl = "";
-    currentPlayUrl = "";
     currentType = "auto";
     isLiveStream = false;
     try { art.pause(); } catch (_) {}
@@ -160,14 +160,15 @@ $("#urlInput").addEventListener("input", () => {
 const list = $("#presetList");
 loadPresets().then((presets) => {
   presets.forEach((p) => {
-    const el = document.createElement("div");
+    const el = document.createElement("button");
+    el.type = "button";
     el.className = "item";
     el.innerHTML = `
-      <div class="meta">
-        <div class="name">${p.name}</div>
-        <div class="sub">${p.sub}</div>
-      </div>
-      <div class="badge preset-badge" data-url="${p.url}">填充</div>
+      <span class="meta">
+        <span class="name">${p.name}</span>
+        <span class="sub">${p.sub}</span>
+      </span>
+      <span class="badge preset-badge">填充</span>
     `;
 
     el.addEventListener("click", () => {
