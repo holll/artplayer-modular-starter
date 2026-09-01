@@ -1,6 +1,6 @@
 # ArtPlayer 模块化播放器起步项目
 
-一个基于 **ArtPlayer + 原生 ES Modules** 的现代化播放器示例项目，重点展示**清晰的模块结构、播放进度记忆与恢复机制**，以及一套简洁克制的玻璃拟态 UI。
+一个基于 **ArtPlayer + 原生 ES Modules** 的现代化播放器示例项目，重点展示**清晰的模块结构**，以及一套简洁克制的玻璃拟态 UI。
 
 本项目不依赖任何前端框架，适合作为 **学习示例 / 起步模板 / 真实项目基础**。
 
@@ -10,8 +10,6 @@
 
 - 🎬 **ArtPlayer 播放器集成**
 - 📦 **原生 ES Module 架构**（无全局变量污染）
-- ▶️ **播放进度记忆与续播**
-- 🪟 **续播确认弹窗**
 - 🎨 **Glassmorphism 玻璃拟态 UI**
 - ♿ **无障碍支持**（自动适配 `prefers-reduced-motion`）
 - 📱 **响应式布局**（桌面 / 移动端）
@@ -28,9 +26,6 @@
 │  ├─ main.js            # 应用入口
 │  ├─ dom.js             # DOM 工具
 │  ├─ utils.js           # 通用工具
-│  ├─ progressStore.js   # IndexedDB 进度存储
-│  ├─ resumeModal.js     # 续播弹窗
-│  ├─ progressLine.js    # 最近播放进度提示
 │  ├─ customTypes.js     # HLS/FLV/DASH 扩展
 │  ├─ aspectRatio.js     # 比例同步
 │  ├─ liveDetect.js      # 直播检测

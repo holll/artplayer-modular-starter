@@ -2,7 +2,7 @@
 
 # ArtPlayer Modular Starter
 
-A modern, modular ArtPlayer starter project built with **ES Modules**, focused on clean structure, resume playback, and a glass-style UI.
+A modern, modular ArtPlayer starter project built with **ES Modules**, focused on clean structure and a glass-style UI.
 
 This project demonstrates how to organize an ArtPlayer-based video player using native ES modules, making the codebase easy to extend, maintain, and publish.
 
@@ -12,8 +12,6 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 
 - 🎬 **ArtPlayer integration** with clean container sizing
 - 📦 **ES Module architecture** (no global pollution)
-- ▶️ **Resume playback** with last progress memory
-- 🪟 **Resume confirmation modal**
 - 🎨 **Glassmorphism UI** (modern, minimal)
 - ♿ **Reduced motion support** (`prefers-reduced-motion`)
 - 📱 **Responsive layout** (desktop & mobile)
@@ -30,9 +28,6 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 │  ├─ main.js            # App entry
 │  ├─ dom.js             # DOM helpers
 │  ├─ utils.js           # Shared utils
-│  ├─ progressStore.js   # IndexedDB progress storage
-│  ├─ resumeModal.js     # Resume modal UI
-│  ├─ progressLine.js    # Last-played progress line
 │  ├─ customTypes.js     # HLS/FLV/DASH hooks
 │  ├─ aspectRatio.js     # Aspect ratio sync
 │  ├─ liveDetect.js      # Live stream detection

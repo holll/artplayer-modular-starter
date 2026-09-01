@@ -1,10 +1,7 @@
 /* global Artplayer */
 
 import { $ } from "./dom.js";
-import { inferType, setBadge, clamp, formatTime } from "./utils.js";
-import { dbGet, dbPut, dbDel } from "./progressStore.js";
-import { ensureResumeUI, showResumeModal } from "./resumeModal.js";
-import { ensureProgressLine, setProgressLine } from "./progressLine.js";
+import { inferType, setBadge } from "./utils.js";
 import { playM3u8, playFlv, playMpd } from "./customTypes.js";
 import { createAspectSync } from "./aspectRatio.js";
 import { createLiveDetector } from "./liveDetect.js";
@@ -57,7 +54,7 @@ const art = new Artplayer({
 const { bindAspectSync } = createAspectSync(art);
 bindAspectSync();
 
-const { detectLiveStream, canSaveProgress } = createLiveDetector(art);
+const { detectLiveStream } = createLiveDetector(art);
 
 // -------------------------
 // State
@@ -66,21 +63,6 @@ let currentUrl = "";
 let currentPlayUrl = "";
 let currentType = "auto";
 let isLiveStream = false;
-
-// -------------------------
-// UI init
-// -------------------------
-ensureResumeUI();
-ensureProgressLine({
-  onClear: async () => {
-    const url = $("#urlInput")?.value?.trim();
-    if (!url) return;
-    await dbDel(url);
-    setProgressLine(null);
-    refreshPresetBadges();
-    try { art.notice.show = "已清除该地址的历史进度"; } catch (_) {}
-  },
-});
 
 // -------------------------
 // Status
@@ -98,47 +80,7 @@ art.on("pause", () => {
 art.on("error", () => toastStatus("播放错误"));
 
 // -------------------------
-// Save progress (throttled)
-// -------------------------
-let lastSaveAt = 0;
-const SAVE_INTERVAL_MS = 3000;
-
-async function saveNow() {
-  if (!canSaveProgress({ url: currentUrl, isLiveStream })) return;
-  const t = Number(art.currentTime) || 0;
-  const d = Number(art.duration) || 0;
-  if (t <= 0.5) return;
-  await dbPut(currentUrl, t, d, { type: currentType, isLive: isLiveStream });
-}
-
-art.on("timeupdate", () => {
-  if (!canSaveProgress({ url: currentUrl, isLiveStream })) return;
-  const now = Date.now();
-  if (now - lastSaveAt >= SAVE_INTERVAL_MS) {
-    lastSaveAt = now;
-    saveNow();
-  }
-});
-
-art.on("pause", () => saveNow());
-
-art.on("ended", async () => {
-  if (!currentUrl) return;
-  if (isLiveStream) return;
-  await dbDel(currentUrl);
-  setProgressLine(null);
-  refreshPresetBadges();
-});
-
-window.addEventListener("beforeunload", () => {
-  try { saveNow(); } catch (_) {}
-});
-art.on("destroy", () => {
-  try { saveNow(); } catch (_) {}
-});
-
-// -------------------------
-// Load URL + resume (auto seek + retry)
+// Load URL
 // -------------------------
 async function loadUrl(url) {
   currentUrl = url;
@@ -152,51 +94,14 @@ async function loadUrl(url) {
 
   toastStatus("加载中…");
 
-  const resumeOnce = async () => {
+  const onReady = () => {
     isLiveStream = detectLiveStream(currentType);
-
     const badgeText = isLiveStream ? `type: ${currentType} · LIVE` : `type: ${currentType}`;
     setBadge($("#typeBadge"), badgeText);
-
-    const rec = await dbGet(url);
-    setProgressLine(rec, { isLive: isLiveStream });
-
-    if (isLiveStream) return;
-
-    const duration = Number(art.duration);
-    if (!Number.isFinite(duration) || duration <= 15) return;
-
-    const saved = rec && Number(rec.time) ? Number(rec.time) : 0;
-    const safeSaved = clamp(saved, 0, Math.max(0, duration - 0.5));
-
-    if (safeSaved > 5 && safeSaved < duration - 5) {
-      try { art.seek = safeSaved; } catch (_) {}
-
-      setTimeout(() => {
-        try {
-          if (Math.abs((art.currentTime || 0) - safeSaved) > 1) {
-            art.seek = safeSaved;
-          }
-        } catch (_) {}
-      }, 500);
-
-      // 保留弹窗（可选）
-      showResumeModal({
-        subText: `已自动恢复到 ${formatTime(safeSaved)} / ${formatTime(duration)}`,
-        hintText: "提示：直播流不保存进度。",
-        onContinue: () => {}, // 已自动恢复，这里留空即可
-        onRestart: async () => {
-          await dbDel(url);
-          setProgressLine(null);
-          refreshPresetBadges();
-          try { art.seek = 0; } catch (_) {}
-        },
-      });
-    }
   };
 
-  art.once("video:canplay", resumeOnce);
-  art.once("video:loadedmetadata", resumeOnce);
+  art.once("video:canplay", onReady);
+  art.once("video:loadedmetadata", onReady);
 }
 
 // -------------------------
@@ -222,7 +127,6 @@ $("#stopBtn").addEventListener("click", () => {
     try { art.video.removeAttribute("src"); art.video.load(); } catch (_) {}
     toastStatus("已停止");
     setBadge($("#typeBadge"), "type: -");
-    setProgressLine(null);
   } catch (_) {}
 });
 
@@ -243,19 +147,11 @@ $("#urlInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") $("#playBtn").click();
 });
 
-// 输入变化：显示该 URL 的历史进度
-let __inputTimer = null;
 $("#urlInput").addEventListener("input", () => {
-  clearTimeout(__inputTimer);
-  __inputTimer = setTimeout(async () => {
-    const url = $("#urlInput").value.trim();
-    if (!url) return setProgressLine(null);
-
-    const t = inferType(url);
-    const rec = await dbGet(url);
-    setProgressLine(rec, { isLive: false });
-    setBadge($("#typeBadge"), `type: ${t}`);
-  }, 250);
+  const url = $("#urlInput").value.trim();
+  if (!url) return;
+  const t = inferType(url);
+  setBadge($("#typeBadge"), `type: ${t}`);
 });
 
 // -------------------------
@@ -283,26 +179,6 @@ loadPresets().then((presets) => {
 
     list.appendChild(el);
   });
-
-  refreshPresetBadges();
 });
-
-async function refreshPresetBadges() {
-  const badges = document.querySelectorAll(".preset-badge");
-  badges.forEach((b) => (b.textContent = "填充"));
-
-  for (const b of badges) {
-    const url = b.getAttribute("data-url");
-    if (!url) continue;
-    const rec = await dbGet(url);
-    if (rec && rec.time && rec.time > 5) {
-      b.textContent = formatTime(rec.time);
-      b.title = `上次播放到 ${formatTime(rec.time)}`;
-    } else {
-      b.textContent = "填充";
-      b.title = "";
-    }
-  }
-}
 
 toastStatus("未加载");

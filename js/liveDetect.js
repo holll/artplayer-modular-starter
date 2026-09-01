@@ -24,12 +24,5 @@ export function createLiveDetector(art) {
     return false;
   }
 
-  function canSaveProgress({ url, isLiveStream }) {
-    if (!url) return false;
-    if (isLiveStream) return false;
-    const d = Number(art.duration);
-    return Number.isFinite(d) && d > 15;
-  }
-
-  return { detectLiveStream, canSaveProgress };
+  return { detectLiveStream };
 }
