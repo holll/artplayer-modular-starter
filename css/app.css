@@ -355,9 +355,24 @@ input[type="text"]:focus-visible{
   /* 圆角同心：卡 22 − 内边距 16 ≈ 壳 12 */
   .player-shell, #player .art-video-player{ border-radius: var(--r-sm); }
 }
+/* 320~360 的小屏（iPhone SE 一代）把整页压进一屏：
+   标题副行、空态的 16:9 大黑块、页脚说明这些都让位给“粘贴地址”本身 */
 @media (max-width: 360px){
   .brand h1{ font-size: 17px; }
+  .brand p{ display: none; }
   .btn{ padding: 10px var(--sp-2); font-size: 13px; }
+
+  .topbar{ margin-bottom: var(--sp-3); }
+  .layout{ gap: var(--sp-3); }
+  .player-card, .ctrl-card{ padding: var(--sp-3); }
+  .player-card{ gap: var(--sp-2); }
+
+  /* 空态下面那句提示与引导层重复，先省掉 17px */
+  .player-shell.is-empty + .hint{ display: none; }
+
+  .foot{ margin-top: var(--sp-3); }
+  .foot p{ display: none; }
+  .foot nav{ margin-left: auto; }
 }
 
 
@@ -560,4 +575,11 @@ input[type="text"]:focus-visible{
   }
   .foot nav{ gap: var(--sp-3); }
   .foot a{ min-height: 28px; }
+}
+
+/* 小屏空态：16:9 的黑块太占高度，压成矮横幅；有画面后自动还原比例
+   （必须写在 #player 基础规则之后，否则 aspect-ratio 被后面的声明覆盖；
+    height 需要 !important，基础规则里是 height:auto !important） */
+@media (max-width: 400px){
+  .player-shell.is-empty #player{ aspect-ratio: auto; height: 112px !important; }
 }
