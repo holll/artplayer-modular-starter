@@ -381,7 +381,8 @@ function boot() {
       el.append(em);
 
       el.addEventListener("click", () => {
-        urlInput.value = url;
+        // 相对路径（如仓库自带的 samples/demo.flv）转成绝对地址，方便复制与识别
+        urlInput.value = new URL(url, location.href).href;
         urlInput.dispatchEvent(new Event("input"));
         // 触屏上主动聚焦只会弹键盘、挡住半屏，交给用户自己点输入框
         if (window.matchMedia("(pointer: fine)").matches) urlInput.focus();
