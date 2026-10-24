@@ -17,7 +17,7 @@
 - 🧩 **单行示例**：四种类型收成 chip，390×844 下整页一屏放得下
 - 🔁 **播放引擎自动销毁**（HLS / FLV / DASH 切换时释放，不泄漏）
 - ⚠️ **可读的错误提示**（CORS / 403 / 网络异常以文字说明，而不是一直转圈）
-- 🌐 **可选代理前缀**，绕过跨域限制（`?proxy=`，详见 [docs/cors-playback.md](./docs/cors-playback.md)）
+- 🌐 **可选代理前缀**，绕过跨域限制（`?proxy=`，详见 [docs/cors-playback.md](./docs/cors-playback.md)）——注意播放器本身不是代理：MP4 / WebM 这类直链由 `<video>` 直接加载，源站不返回 CORS 头也能播；HLS / FLV / DASH 由 MSE 用 fetch 拉分片，**必须源站返回 `Access-Control-Allow-Origin`**，否则只能走自有代理
 - ⚡ **播放引擎按需加载**：HLS / FLV / DASH 只在用到时才下载，首屏从约 1.5 MB 降到约 270 KB
 - 🔒 **系统媒体控制**：锁屏 / 通知栏 / 耳机线控可播放、暂停、快进快退
 - 📶 **断网感知**：断网与恢复都有文字提示，恢复后自动续播

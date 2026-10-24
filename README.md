@@ -19,7 +19,7 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 - 🧩 **One-line presets** — the four sample types are compact chips, so the whole page fits a 390×844 screen
 - 🔁 **Playback engine cleanup** (HLS / FLV / DASH are destroyed on switch — no leaks)
 - ⚠️ **Readable error handling** (CORS / 403 / network failures surface as plain text, not a spinner)
-- 🌐 **Optional proxy prefix** for CORS-blocked streams (`?proxy=`, see [docs/cors-playback.md](./docs/cors-playback.md))
+- 🌐 **Optional proxy prefix** for CORS-blocked streams (`?proxy=`, see [docs/cors-playback.md](./docs/cors-playback.md)) — note the player itself is not a proxy: plain MP4/WebM files play cross-origin without any CORS header, but HLS / FLV / DASH are fetched by MSE and **need `Access-Control-Allow-Origin`** (or your own proxy) on the media host
 - ⚡ **On-demand playback engines** — HLS / FLV / DASH are lazy-loaded, first paint is ~270 KB instead of ~1.5 MB
 - 🔒 **Media Session support** — lock screen / notification / headset keys control playback
 - 📶 **Offline aware** — disconnects and reconnects surface as plain-text status and resume automatically
