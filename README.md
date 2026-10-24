@@ -13,8 +13,11 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 - 🎬 **ArtPlayer integration** with clean container sizing
 - 📦 **ES Module architecture** (no global pollution)
 - 🎨 **Glassmorphism UI** (modern, minimal)
-- ♿ **Reduced motion support** (`prefers-reduced-motion`)
-- 📱 **Responsive layout** (desktop & mobile)
+- ♿ **Accessibility built in** (keyboard-operable controls, ARIA labels, `prefers-reduced-motion`)
+- 📱 **Mobile-first layout** (44px touch targets, landscape & safe-area handling)
+- 🔁 **Playback engine cleanup** (HLS / FLV / DASH are destroyed on switch — no leaks)
+- ⚠️ **Readable error handling** (CORS / 403 / network failures surface as plain text, not a spinner)
+- 🌐 **Optional proxy prefix** for CORS-blocked streams (`?proxy=`, see [docs/cors-playback.md](./docs/cors-playback.md))
 
 ---
 
@@ -24,6 +27,8 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 .
 ├─ index.html
 ├─ css/
+├─ docs/
+│  └─ cors-playback.md   # Working around CORS when playing video
 ├─ js/
 │  ├─ main.js            # App entry
 │  ├─ dom.js             # DOM helpers
@@ -75,6 +80,25 @@ Then open the provided local URL in your browser.
 - Easier long-term maintenance
 
 This project intentionally avoids bundler-specific syntax so it works both **with or without** build tools.
+
+---
+
+## 🌐 Playing cross-origin streams
+
+Media served without `Access-Control-Allow-Origin` cannot be read by hls.js / flv.js / dash.js,
+and any `crossorigin` attribute makes even plain MP4 fail. Two escape hatches are built in:
+
+```js
+// once per browser (persisted in localStorage)
+setArtPlayerProxy("https://proxy.example.com/?url=");
+setArtPlayerProxy(""); // disable
+
+// or per URL
+// https://your-site/?proxy=https://proxy.example.com/?url=
+```
+
+The prefix only rewrites **MSE** sources (`m3u8` / `flv` / `mpd`); direct MP4 stays untouched.
+Full write-up (reverse proxy recipes, Cloudflare Worker, Nginx, what still cannot work): **[docs/cors-playback.md](./docs/cors-playback.md)**.
 
 ---
 

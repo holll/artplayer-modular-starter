@@ -25,19 +25,19 @@
       <section class="card player-card">
         <div class="player-title">
           <div class="section-title">播放器</div>
-          <div class="badge" id="typeBadge" aria-live="polite" aria-atomic="true">type: -</div>
+          <div class="badge" id="typeBadge">type: -</div>
         </div>
         <div class="player-shell">
           <div id="player"></div>
         </div>
-        <div class="hint" id="hintLine">支持 MP4 / HLS / FLV / DASH 与移动端比例自适应</div>
+        <div class="hint" id="hintLine" role="status" aria-live="polite">支持 MP4 / HLS / FLV / DASH 与移动端比例自适应</div>
       </section>
 
       <aside class="card ctrl-card">
         <div class="field">
           <div class="section-title">输入播放地址</div>
           <div class="row">
-            <input id="urlInput" type="text" placeholder="视频 URL…" aria-label="视频地址" autocomplete="url" name="videoUrl" />
+            <input id="urlInput" type="url" inputmode="url" enterkeyhint="go" placeholder="视频 URL…" aria-label="视频地址" autocomplete="url" name="videoUrl" />
             <button class="btn primary" id="playBtn">播放</button>
           </div>
           <div class="row">

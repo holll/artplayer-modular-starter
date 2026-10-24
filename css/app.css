@@ -39,11 +39,15 @@
   --card: rgba(255,255,255,.06);
   --line: rgba(255,255,255,.10);
   --text: rgba(255,255,255,.90);
-  --muted: rgba(255,255,255,.60);
+  --muted: rgba(255,255,255,.66);
+  --accent: #7ea6ff;          /* 纱幕上 4.49:1、卡片上 6.53:1 */
+  --accent-strong: #5c88ff;
   --shadow: 0 18px 60px rgba(0,0,0,.55);
   --radius: 18px;
   --radius2: 22px;
   --pad: 18px;
+  --scrim: rgba(4,7,14,.86);
+  --hit: 44px;               /* 触屏最小点按热区 */
 }
 
 *{ box-sizing: border-box; }
@@ -63,7 +67,11 @@ body{
 .wrap{
   max-width: 1200px;
   margin: 0 auto;
-  padding: 22px max(16px, env(safe-area-inset-right)) 28px max(16px, env(safe-area-inset-left));
+  padding:
+    22px
+    max(16px, env(safe-area-inset-right))
+    max(28px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
 }
 
 .topbar{
@@ -85,14 +93,27 @@ body{
   scroll-margin-top: 20px; /* 锚点跳转（skip-link）预留顶距 */
 }
 
+/* 玻璃层放在 ::before 里：backdrop-filter 会让元素成为 fixed 后代的包含块，
+   直接写在 .card 上会导致「网页全屏」只铺满卡片而不是整个视口。 */
 .card{
+  position: relative;
+  isolation: isolate;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius2);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   overflow:hidden;
+}
+.card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  border-radius: inherit;
+  pointer-events:none;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.012));
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
 }
 
 .player-card{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
@@ -106,7 +127,7 @@ body{
 
 .badge{
   font-size:12px;
-  color: rgba(255,255,255,.72);
+  color: rgba(255,255,255,.78);
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.10);
   padding: 6px 10px;
@@ -122,46 +143,48 @@ body{
   background: rgba(0,0,0,.35);
 }
 
+.player-error{
+  margin:0;
+  padding: 32px 16px;
+  text-align:center;
+  color: var(--muted);
+  font-size: 13px;
+}
 
 .ctrl-card{ padding: var(--pad); display:flex; flex-direction:column; gap: 12px; }
-.section-title{ font-size: 13px; color: rgba(255,255,255,.80); margin:0; letter-spacing:.2px; font-weight: 650; }
+.section-title{ font-size: 13px; color: rgba(255,255,255,.86); margin:0; letter-spacing:.2px; font-weight: 650; }
 
 .field{ display:flex; flex-direction:column; gap: 8px; }
 .row{ display:flex; gap: 10px; align-items:center; }
 
-.check{
-  display:flex;
-  align-items:center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--muted);
-  user-select: none;
-}
-.check input{
-  width: 16px;
-  height: 16px;
-  accent-color: #5c88ff;
-}
-
+input[type="url"],
 input[type="text"]{
   flex: 1;
   width: 100%;
+  min-height: var(--hit);
   background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.16);
   color: var(--text);
   border-radius: 14px;
   padding: 12px 12px;
-  font-size: 14px;
+  font-size: 16px;            /* ≥16px：iOS 聚焦时不放大页面 */
   outline: none;
   transition: border-color .15s ease;
   touch-action: manipulation;
 }
-input[type="text"]:focus-visible{ border-color: rgba(255,255,255,.24); }
+input::placeholder{ color: rgba(255,255,255,.45); }
+input[type="url"]:focus-visible,
+input[type="text"]:focus-visible{
+  border-color: rgba(126,166,255,.9);
+  outline: 2px solid rgba(126,166,255,.9);
+  outline-offset: 2px;
+}
 
 .btn{
-  border: 1px solid rgba(255,255,255,.14);
+  min-height: var(--hit);
+  border: 1px solid rgba(255,255,255,.16);
   background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
-  color: rgba(255,255,255,.92);
+  color: rgba(255,255,255,.94);
   padding: 11px 12px;
   border-radius: 14px;
   cursor:pointer;
@@ -173,13 +196,13 @@ input[type="text"]:focus-visible{ border-color: rgba(255,255,255,.24); }
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.btn:hover{ filter: brightness(1.08); border-color: rgba(255,255,255,.24); }
+.btn:hover{ filter: brightness(1.08); border-color: rgba(255,255,255,.26); }
 .btn:active{ transform: translateY(1px); }
 .btn.primary{
   background: linear-gradient(180deg, rgba(92,136,255,.34), rgba(92,136,255,.18));
   border-color: rgba(92,136,255,.40);
 }
-.btn:focus-visible{ outline: 2px solid rgba(92,136,255,.7); outline-offset: 2px; }
+.btn:focus-visible{ outline: 2px solid rgba(126,166,255,.9); outline-offset: 2px; }
 
 .list{ display:flex; flex-direction:column; gap: 8px; margin-top: 2px; }
 .item{
@@ -187,6 +210,7 @@ input[type="text"]:focus-visible{ border-color: rgba(255,255,255,.24); }
   align-items:center;
   justify-content:space-between;
   gap: 10px;
+  min-height: var(--hit);
   padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,.10);
@@ -200,7 +224,7 @@ input[type="text"]:focus-visible{ border-color: rgba(255,255,255,.24); }
 }
 .item:hover{ border-color: rgba(255,255,255,.20); background: rgba(255,255,255,.07); }
 .item:active{ transform: translateY(1px); }
-.item:focus-visible{ outline: 2px solid rgba(92,136,255,.7); outline-offset: 2px; }
+.item:focus-visible{ outline: 2px solid rgba(126,166,255,.9); outline-offset: 2px; }
 .item .meta{ display:flex; flex-direction:column; gap: 3px; min-width: 0; }
 .item .name{ font-size: 13px; font-weight: 700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .item .sub{ font-size: 12px; color: var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -210,44 +234,156 @@ input[type="text"]:focus-visible{ border-color: rgba(255,255,255,.24); }
   color: var(--muted);
   line-height: 1.45;
   padding-top: 2px;
+  overflow-wrap: anywhere;
 }
 
 /* Mobile */
 @media (max-width: 920px){
   .layout{ grid-template-columns: 1fr; }
-  #player{ height: min(52vh, 520px); }
+  #player{ max-height: min(72svh, 640px); }
 }
-@media (max-width: 420px){
-  .wrap{ padding: 18px 12px 22px; }
+@media (max-width: 430px){
+  .wrap{
+    padding:
+      18px
+      max(12px, env(safe-area-inset-right))
+      max(22px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
   .row{ flex-direction: column; align-items: stretch; }
   .btn{ width: 100%; }
-  #player{ min-height: 220px; }
+  #player{ min-height: 200px; }
+}
+@media (max-width: 360px){
+  .brand h1{ font-size: 16px; }
+  .btn{ padding: 10px 8px; font-size: 13px; }
+  /* 窄屏放下全屏/音量/画中画会挤爆控制条，先保留核心操作 */
+  #player .art-control-volume,
+  #player .art-control-pip,
+  #player .art-control-fullscreenWeb{ display: none !important; }
 }
 
+/* 横屏小高度：让播放器与控制条都留在首屏内（不靠滚动） */
+@media (orientation: landscape) and (max-height: 520px){
+  .wrap{ padding-top: 8px; padding-bottom: 8px; }
+  .topbar{ margin-bottom: 6px; }
+  .brand p{ display: none; }
+  /* 标题行在这里只占高度，按下播放的真实需求先让它 */
+  .player-title{ display: none; }
+  .player-card{ padding: 8px; gap: 8px; }
+  #player{
+    width: auto;
+    height: calc(100svh - 64px);
+    max-height: calc(100svh - 64px);
+    margin-inline: auto;
+  }
+  .ctrl-card{ padding: 12px; }
+}
 
-/* Respect OS-level reduced motion preference (no UI change for default users) */
+/* 极老浏览器没有 aspect-ratio：用内边距占位，避免容器塌成 0 高 */
+@supports not (aspect-ratio: 16 / 9){
+  #player{ height: 0; padding-top: 56.25%; position: relative; }
+  #player .art-video-player{ position:absolute; inset: 0; }
+}
+
+/* Respect OS-level reduced motion preference：
+   只关掉位移/动画，保留颜色与透明度反馈（否则按压缩放、提示淡入全没了） */
 @media (prefers-reduced-motion: reduce){
-  *{
-    transition: none !important;
-    animation: none !important;
+  *,*::before,*::after{
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
+  .btn:active, .item:active{ transform: none; }
+  #player .art-control, #player .art-progress, #player .art-bottom{ transition-duration: .001ms !important; }
 }
 
-/* Make ArtPlayer UI blend better with glass theme */
-.art-video-player{
-  border-radius: 16px !important;
-  overflow:hidden;
+/* -------------------------
+   ArtPlayer 外观与可操作性
+   ------------------------- */
+#player .art-video-player{
+  border-radius: 16px;
+  overflow: hidden;
   min-height: 0 !important;
+
+  --art-theme: var(--accent);
+  --art-progress-height: 10px;
+  --art-progress-color: rgba(255,255,255,.45);   /* 轨道 */
+  --art-loaded-color: rgba(255,255,255,.28);     /* 已缓冲 */
+  --art-hover-color: rgba(255,255,255,.62);      /* 悬停预览 */
+  --art-control-opacity: .92;
+  --art-bottom-height: 140px;
 }
-.art-control{
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+
+/* 移动端 ArtPlayer 把控制条压到 38px，撑回 44px 触控标准 */
+#player .art-video-player.art-mobile{
+  --art-control-height: 48px;
+  --art-control-opacity: .95;
 }
-/* Hide the initial loading spinner */
-.art-video-player .art-loading{
-  display: none !important;
+#player .art-control{
+  min-width: var(--hit);
+  min-height: var(--hit);
 }
+#player .art-control:focus-visible,
+#player .art-setting-item:focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+
+/* 进度条：视觉 10px，命中区 44px */
+#player .art-control-progress{ height: var(--hit); }
+#player .art-control-progress .art-control-progress-inner{
+  height: 10px !important;
+  border-radius: 999px;
+}
+#player .art-control-progress:hover .art-control-progress-inner{ height: 10px; }
+#player .art-control-progress .art-progress-indicator{
+  width: 16px;
+  height: 16px;
+}
+
+/* 底部纱幕：控制条压在亮画面上仍然可读 */
+#player .art-bottom{
+  background-image: linear-gradient(
+    to top,
+    rgba(4,7,14,.86) 0%,
+    rgba(4,7,14,.72) 42%,
+    rgba(4,7,14,0) 100%
+  );
+  background-size: 100% 140px;
+  background-position: bottom;
+  padding: 0 12px;
+}
+
+/* 设置面板条目撑到 44px（面板高度由 JS 常量 SETTING_ITEM_HEIGHT 决定） */
+#player .art-setting-item{ min-height: var(--hit); padding: 8px 10px; }
+#player .art-settings{ border-radius: 14px; overflow: hidden; }
+
+/* 网页全屏：不依赖父级是否被裁切 */
+#player .art-video-player.art-fullscreen-web{
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  z-index: 2147483000;
+}
+
+/* 提示条：默认贴左上角、字小；居中并给足对比度 */
+#player .art-notice{ justify-content: center; }
+#player .art-notice-inner{
+  background: rgba(4,7,14,.82);
+  color: rgba(255,255,255,.95);
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+}
+
+/* 加载态保持可见（之前被 display:none 关掉了） */
+#player .art-loading{ background: rgba(4,7,14,.55); }
+#player .art-mask{ background: rgba(4,7,14,.35); }
 
 /* 1) 外层只负责“比例”，不写固定高度 */
 #player{
@@ -255,7 +391,7 @@ input[type="text"]:focus-visible{ border-color: rgba(255,255,255,.24); }
   height: auto !important;
   aspect-ratio: var(--ar, 16/9);   /* JS 动态写 --ar */
   min-height: 0 !important;
-  max-height: none !important;
+  max-width: 100%;
 }
 
 /* 2) 强制 ArtPlayer 内部层级全部撑满容器 */

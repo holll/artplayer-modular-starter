@@ -1,37 +1,111 @@
 /* global Hls, flvjs, dashjs */
 
-export function playM3u8(video, url, art) {
-  if (art.__hls) {
-    try { art.__hls.destroy(); } catch (_) {}
-    art.__hls = null;
-  }
+// 统一的引擎下线入口：切换地址、停止播放、实例销毁都走这里，
+// 避免 HLS ↔ MP4 切换时旧实例仍持有同一个 <video>（MSE 与原生 src 互相打架）。
+export function teardownEngines(art) {
+  const engines = [
+    ["__hls", (inst) => inst.destroy()],
+    ["__flv", (inst) => inst.destroy()],
+    ["__dash", (inst) => inst.reset()],
+  ];
 
-  // Safari native HLS
-  if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = url;
-    return;
-  }
-
-  if (window.Hls && Hls.isSupported()) {
-    const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-    art.__hls = hls;
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    art.on("destroy", () => { try { hls.destroy(); } catch (_) {} });
-  } else {
-    art.notice.show = "当前浏览器不支持 HLS（hls.js 不可用或不支持）";
+  for (const [key, dispose] of engines) {
+    const inst = art[key];
+    art[key] = null;
+    if (!inst) continue;
+    try {
+      dispose(inst);
+    } catch (_) {
+      // 已销毁或初始化失败，忽略即可
+    }
   }
 }
 
-export function playFlv(video, url, art) {
-  if (!window.flvjs || !flvjs.isSupported()) {
-    art.notice.show = "当前浏览器不支持 FLV（flv.js 不可用或不支持）";
+const RECOVER_MAX = 3;
+
+// 引擎层的提示同时走 art.notice（画面内）与 appMessage 事件（页面 hint，aria-live 可读）
+function say(art, message) {
+  art.notice.show = message;
+  try {
+    art.emit("appMessage", message);
+  } catch (_) {
+    // 事件系统不可用时静默
+  }
+}
+
+export function playM3u8(video, url, art) {
+  teardownEngines(art);
+
+  // 优先 hls.js：只有它能做码率切换、错误恢复与统一错误提示。
+  // 注意不能先判 canPlayType —— 部分 Chromium 构建会返回 "maybe"，
+  // 结果原生 <video> 抢先用上 HLS，hls.js 就再也没机会介入。
+  if (!window.Hls || !Hls.isSupported()) {
+    // Safari / iOS：MSE 不可用，交给原生 HLS
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = url;
+      return;
+    }
+    say(art, "当前浏览器不支持 HLS（hls.js 不可用或不支持）");
     return;
   }
 
-  if (art.__flv) {
-    try { art.__flv.destroy(); } catch (_) {}
-    art.__flv = null;
+  const hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 90 });
+  art.__hls = hls;
+
+  let recovered = 0;
+  const fail = (message) => {
+    say(art, message);
+    teardownEngines(art);
+  };
+
+  hls.on(Hls.Events.ERROR, (_event, data) => {
+    if (!data || !data.fatal) return;
+
+    // 清单本身读不到时重试没有意义（hls.js 内部会无限退避），直接给出结论
+    if (
+      data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR ||
+      data.details === Hls.ErrorDetails.MANIFEST_LOAD_TIMEOUT ||
+      data.details === Hls.ErrorDetails.MANIFEST_PARSING_ERROR
+    ) {
+      fail("加载失败：m3u8 清单无法读取，可能是地址失效或被跨域策略（CORS）拦截");
+      return;
+    }
+
+    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+      recovered += 1;
+      if (recovered <= RECOVER_MAX) {
+        say(art, `网络异常，正在重试（${recovered}/${RECOVER_MAX}）`);
+        hls.startLoad();
+      } else {
+        fail("加载失败：地址不可访问，或被跨域策略（CORS）拦截");
+      }
+      return;
+    }
+
+    if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+      recovered += 1;
+      if (recovered <= RECOVER_MAX) {
+        say(art, `解码异常，正在恢复（${recovered}/${RECOVER_MAX}）`);
+        hls.recoverMediaError();
+      } else {
+        fail("解码失败：码流可能已损坏或编码不受支持");
+      }
+      return;
+    }
+
+    fail("播放失败：浏览器拒绝加载该码流");
+  });
+
+  hls.loadSource(url);
+  hls.attachMedia(video);
+}
+
+export function playFlv(video, url, art) {
+  teardownEngines(art);
+
+  if (!window.flvjs || !flvjs.isSupported()) {
+    say(art, "当前浏览器不支持 FLV（flv.js 不可用或不支持）");
+    return;
   }
 
   const flv = flvjs.createPlayer(
@@ -40,26 +114,36 @@ export function playFlv(video, url, art) {
   );
 
   art.__flv = flv;
+
+  flv.on(flvjs.Events.ERROR, (type, detail) => {
+    const reason = detail === "NetworkError" || detail === "NetworkException"
+      ? "网络中断，或地址被跨域策略（CORS）拦截"
+      : `解码异常（${type}/${detail}）`;
+    say(art, `FLV 播放失败：${reason}`);
+    teardownEngines(art);
+  });
+
   flv.attachMediaElement(video);
   flv.load();
-
-  art.on("destroy", () => { try { flv.destroy(); } catch (_) {} });
 }
 
 export function playMpd(video, url, art) {
-  if (!window.dashjs) {
-    art.notice.show = "dash.js 未加载，无法播放 DASH";
-    return;
-  }
+  teardownEngines(art);
 
-  if (art.__dash) {
-    try { art.__dash.reset(); } catch (_) {}
-    art.__dash = null;
+  if (!window.dashjs) {
+    say(art, "dash.js 未加载，无法播放 DASH");
+    return;
   }
 
   const player = dashjs.MediaPlayer().create();
   art.__dash = player;
-  player.initialize(video, url, true);
 
-  art.on("destroy", () => { try { player.reset(); } catch (_) {} });
+  player.on(dashjs.MediaPlayer.events.ERROR, (event) => {
+    const detail = event?.error?.message || event?.error?.code || "未知错误";
+    say(art, `DASH 播放失败：${detail}`);
+  });
+
+  // 第三个参数是 autoplay：保持 false，与全局 autoplay:false 一致
+  player.initialize(video, url, false);
+  player.setAutoPlay(false);
 }

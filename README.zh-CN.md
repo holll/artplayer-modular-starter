@@ -11,8 +11,11 @@
 - 🎬 **ArtPlayer 播放器集成**
 - 📦 **原生 ES Module 架构**（无全局变量污染）
 - 🎨 **Glassmorphism 玻璃拟态 UI**
-- ♿ **无障碍支持**（自动适配 `prefers-reduced-motion`）
-- 📱 **响应式布局**（桌面 / 移动端）
+- ♿ **无障碍支持**（控制条可键盘操作、ARIA 标注、适配 `prefers-reduced-motion`）
+- 📱 **移动端优先布局**（44px 触控区、横屏与安全区适配）
+- 🔁 **播放引擎自动销毁**（HLS / FLV / DASH 切换时释放，不泄漏）
+- ⚠️ **可读的错误提示**（CORS / 403 / 网络异常以文字说明，而不是一直转圈）
+- 🌐 **可选代理前缀**，绕过跨域限制（`?proxy=`，详见 [docs/cors-playback.md](./docs/cors-playback.md)）
 
 ---
 
@@ -22,6 +25,8 @@
 .
 ├─ index.html
 ├─ css/
+├─ docs/
+│  └─ cors-playback.md   # 跨域播放的可行方案
 ├─ js/
 │  ├─ main.js            # 应用入口
 │  ├─ dom.js             # DOM 工具
@@ -73,6 +78,24 @@ npm create vite@latest
 - 更利于长期维护和扩展
 
 本项目刻意避免使用打包器私有语法，**既可直接运行，也方便未来接入 Vite / Rollup / Webpack**。
+
+---
+
+## 🌐 播放跨域视频源
+
+源站不返回 `Access-Control-Allow-Origin` 时，hls.js / flv.js / dash.js 无法读取分片；
+而给 MP4 加 `crossorigin` 反而会让本来能播的直链失败。项目内置两种代理开关：
+
+```js
+// 控制台执行一次即可（写入 localStorage）
+setArtPlayerProxy("https://proxy.example.com/?url=");
+setArtPlayerProxy(""); // 关闭
+
+// 或单次生效：https://your-site/?proxy=https://proxy.example.com/?url=
+```
+
+代理只作用于 **MSE 类**（`m3u8` / `flv` / `mpd`），MP4 直出保持原地址。
+完整方案（反代、Cloudflare Worker、Nginx、以及仍然无解的情况）：**[docs/cors-playback.md](./docs/cors-playback.md)**。
 
 ---
 
