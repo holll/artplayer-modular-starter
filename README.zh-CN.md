@@ -43,6 +43,7 @@
 │  ├─ liveDetect.js      # 直播检测
 │  ├─ presets.json       # 示例地址配置
 │  └─ vendors/           # ArtPlayer 及按需加载的播放依赖
+├─ samples/demo.flv        # FLV 示例样本（仓库自带，保证示例可播）
 ├─ fonts/
 └─ favicon.ico
 ```

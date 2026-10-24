@@ -45,6 +45,7 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 │  ├─ liveDetect.js      # Live stream detection
 │  ├─ presets.json       # Demo URL presets
 │  └─ vendors/           # ArtPlayer + lazily loaded playback libs
+├─ samples/demo.flv        # bundled FLV sample so the demo always plays
 ├─ fonts/
 └─ favicon.ico
 ```

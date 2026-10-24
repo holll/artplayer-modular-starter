@@ -385,7 +385,7 @@ function boot() {
         urlInput.dispatchEvent(new Event("input"));
         // 触屏上主动聚焦只会弹键盘、挡住半屏，交给用户自己点输入框
         if (window.matchMedia("(pointer: fine)").matches) urlInput.focus();
-        art.notice.show = "已填充示例地址（请替换为可用链接）";
+        art.notice.show = "已填充示例地址，可直接播放";
       });
 
       list.appendChild(el);
