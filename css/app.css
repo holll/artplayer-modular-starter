@@ -173,6 +173,7 @@ body{
   background: rgba(255,138,138,.12);
 }
 /* 类型：等宽小字，和状态徽标区分开 */
+.badge--type[data-idle="true"]{ display: none; }
 .badge--type{
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11px;
@@ -421,7 +422,7 @@ input[type="text"]:focus-visible{
 
   --art-theme: var(--accent);
   --art-progress-height: 10px;
-  --art-progress-color: rgba(255,255,255,.45);   /* 轨道 */
+  --art-progress-color: rgba(255,255,255,.58);   /* 轨道（亮画面上仍可辨，见 1px 描边） */
   --art-loaded-color: rgba(255,255,255,.28);     /* 已缓冲 */
   --art-hover-color: rgba(255,255,255,.62);      /* 悬停预览 */
   --art-control-opacity: .92;
@@ -432,6 +433,12 @@ input[type="text"]:focus-visible{
 #player .art-video-player.art-mobile{
   --art-control-height: 48px;
   --art-control-opacity: .95;
+  --art-bottom-gap: 5px;      /* 默认 10px，手机上轨道会被推得过高 */
+}
+
+/* 设置面板与页面其它浮层同色，避免彩条透上来 */
+#player .art-settings{
+  background-color: rgba(6,9,18,.86);
 }
 #player .art-control{
   min-width: var(--hit);
@@ -444,16 +451,37 @@ input[type="text"]:focus-visible{
   border-radius: 10px;
 }
 
-/* 进度条：视觉 10px，命中区 44px */
-#player .art-control-progress{ height: var(--hit); }
+/* 进度条：视觉 10px，盒子 16px；44px 命中区用伪元素撑开，避免把轨道顶到画面上部 */
+#player .art-control-progress{
+  height: 16px;
+  min-height: 0;      /* .art-control 的 44px 最小高也会命中它，必须清掉 */
+  position: relative;
+}
+#player .art-control-progress::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: var(--hit);
+  pointer-events: auto;
+}
 #player .art-control-progress .art-control-progress-inner{
   height: 10px !important;
   border-radius: 999px;
 }
-#player .art-control-progress:hover .art-control-progress-inner{ height: 10px; }
 #player .art-control-progress .art-progress-indicator{
   width: 16px;
   height: 16px;
+}
+
+/* 纯白帧下 alpha 到不了 3:1，用与纱幕同族的暗色描边兜底 */
+#player .art-control-progress .art-control-progress-inner{
+  box-shadow: 0 0 0 1px rgba(0,0,0,.28);
+}
+#player .art-control-progress .art-progress-indicator{
+  box-shadow: 0 0 0 1px rgba(0,0,0,.30);
 }
 
 /* 底部纱幕：控制条压在亮画面上仍然可读 */

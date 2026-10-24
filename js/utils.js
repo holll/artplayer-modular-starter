@@ -6,8 +6,13 @@ export function inferType(url) {
   return "auto";
 }
 
-export function setBadge(el, text) {
-  if (el) el.textContent = text;
+export function setBadge(el, text, idle = false) {
+  if (!el) return;
+  el.textContent = text;
+  // 类型徽标在空态没有值可显示，直接收起，避免出现「类型 -」这种半成品文案
+  if (el.classList.contains("badge--type")) {
+    el.dataset.idle = idle ? "true" : "false";
+  }
 }
 // 页面上给人看的类型名：MSE 类直接用类型，直链按扩展名判断
 const NATIVE_EXT = {

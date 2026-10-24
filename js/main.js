@@ -316,7 +316,7 @@ function boot() {
     setEmpty(true);
     toastStatus("未加载", "idle");
     announce("已停止播放，可输入新地址或点击下方示例");
-    setBadge(typeBadge, "类型 -");
+    setBadge(typeBadge, "", true);
     mediaSession.clear();
   });
 
