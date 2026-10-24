@@ -1,22 +1,22 @@
 [
   {
     "name": "MP4 示例",
-    "sub": "MDN 公共测试片 flower.mp4（5s，源站开放 CORS）",
-    "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    "sub": "仓库自带样本 demo.mp4（480×270 · 10s · H.264/AAC）",
+    "url": "samples/demo.mp4"
   },
   {
     "name": "HLS 示例",
-    "sub": "Mux 公共多码率测试流 x36xhzz（源站开放 CORS）",
-    "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    "sub": "仓库自带样本 hls/index.m3u8（3 段 TS · 10s）",
+    "url": "samples/hls/index.m3u8"
   },
   {
     "name": "FLV 示例",
-    "sub": "仓库自带样本 demo.flv（480×270 · 6s · H.264/AAC）",
+    "sub": "仓库自带样本 demo.flv（480×270 · 10s · H.264/AAC）",
     "url": "samples/demo.flv"
   },
   {
     "name": "DASH 示例",
-    "sub": "Akamai 公共 DASH 流 Big Buck Bunny 30fps（源站开放 CORS）",
-    "url": "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd"
+    "sub": "仓库自带样本 dash/manifest.mpd（音视频分离 · 10s）",
+    "url": "samples/dash/manifest.mpd"
   }
 ]
