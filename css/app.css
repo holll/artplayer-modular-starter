@@ -36,9 +36,21 @@
   --accent: #7ea6ff;          /* 纱幕上 4.49:1、卡片上 6.53:1 */
   --accent-strong: #5c88ff;
   --shadow: 0 18px 60px rgba(0,0,0,.55);
-  --radius: 18px;
-  --radius2: 22px;
-  --pad: 16px;
+  /* 间距刻度：4 的倍数，页面里不再出现 7/10/14/22 这类散值 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  /* 圆角刻度：由外到内逐层收小，保证同心 */
+  --r-xl: 22px;
+  --r-lg: 16px;
+  --r-md: 14px;
+  --r-sm: 12px;
+  --radius: var(--r-xl);
+  --radius2: var(--r-xl);
+  --pad: var(--sp-4);
   --scrim: rgba(4,7,14,.86);
   --hit: 44px;               /* 触屏最小点按热区 */
 }
@@ -60,28 +72,33 @@ body{
 .wrap{
   max-width: 1200px;
   margin: 0 auto;
+  /* 内容不足一屏时把页脚压到底部，避免大片空区拖着页面 */
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
   padding:
-    22px
-    max(16px, env(safe-area-inset-right))
-    max(28px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
+    var(--sp-5)
+    max(var(--sp-4), env(safe-area-inset-right))
+    var(--sp-5)
+    max(var(--sp-4), env(safe-area-inset-left));
+  padding-bottom: max(var(--sp-6), env(safe-area-inset-bottom));
 }
 
 .topbar{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap:12px;
-  margin-bottom: 14px;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
 }
-.brand{ display:flex; flex-direction:column; gap:4px; }
+.brand{ display:flex; flex-direction:column; gap: var(--sp-1); }
 .brand h1{ font-size: 20px; margin:0; letter-spacing:.2px; font-weight: 700; }
 .brand p{ margin:0; color: rgba(255,255,255,.58); font-size: 12.5px; line-height: 1.35; }
 
 .layout{
   display:grid;
   grid-template-columns: 1.7fr .9fr;
-  gap: 16px;
+  gap: var(--sp-4);
   align-items: stretch;
   scroll-margin-top: 20px; /* 锚点跳转（skip-link）预留顶距 */
 }
@@ -111,12 +128,12 @@ body{
   -webkit-backdrop-filter: blur(14px) saturate(1.15);
 }
 
-.player-card{ padding: var(--pad); display:flex; flex-direction:column; gap: 12px; }
+.player-card{ padding: var(--pad); display:flex; flex-direction:column; gap: var(--sp-3); }
 .player-title{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
+  gap: var(--sp-2);
   padding: 0;
 }
 
@@ -134,7 +151,7 @@ body{
 .badge--status{
   display:inline-flex;
   align-items:center;
-  gap:6px;
+  gap: var(--sp-1);
   transition: color .15s ease, border-color .15s ease, background .15s ease;
 }
 .badge--status::before{
@@ -167,7 +184,7 @@ body{
 
 .player-shell{
   position: relative;
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   overflow:hidden;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.35);
@@ -186,8 +203,8 @@ body{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 14px;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
   text-align: center;
   pointer-events: none;
   background: radial-gradient(120% 90% at 50% 0%, rgba(126,166,255,.10), transparent 62%);
@@ -195,7 +212,7 @@ body{
 .player-shell.is-empty .empty-state{ display: flex; }
 .empty-state .ico{
   width: 38px; height: 38px;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   display: grid; place-items: center;
   border: 1px solid rgba(126,166,255,.30);
   background: rgba(126,166,255,.10);
@@ -212,12 +229,18 @@ body{
   font-size: 13px;
 }
 
+/* 桌面宽屏时右侧卡片按内容高度收口，不跟播放器等高拉长 */
 .ctrl-card{
-  align-self: start;   /* 桌面宽屏时右侧卡片按内容高度收口，不跟播放器等高拉长 */ padding: var(--pad); display:flex; flex-direction:column; gap: 16px; }
+  align-self: start;
+  padding: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
 .section-title{ font-size: 12px; color: rgba(255,255,255,.62); margin:0; letter-spacing:.4px; font-weight: 600; }
 
-.field{ display:flex; flex-direction:column; gap: 8px; }
-.row{ display:flex; gap: 8px; align-items:center; }
+.field{ display:flex; flex-direction:column; gap: var(--sp-2); }
+.row{ display:flex; gap: var(--sp-2); align-items:center; }
 
 input[type="url"],
 input[type="text"]{
@@ -227,8 +250,8 @@ input[type="text"]{
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.16);
   color: var(--text);
-  border-radius: 14px;
-  padding: 12px 12px;
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
   font-size: 16px;            /* ≥16px：iOS 聚焦时不放大页面 */
   outline: none;
   transition: border-color .15s ease;
@@ -247,8 +270,8 @@ input[type="text"]:focus-visible{
   border: 1px solid rgba(255,255,255,.16);
   background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
   color: rgba(255,255,255,.94);
-  padding: 11px 12px;
-  border-radius: 14px;
+  padding: 11px var(--sp-3);
+  border-radius: var(--r-md);
   cursor:pointer;
   user-select:none;
   font-size: 14px;
@@ -269,7 +292,7 @@ input[type="text"]:focus-visible{
 .btn[disabled]:hover{ border-color: rgba(255,255,255,.16); }
 .btn[disabled]:active{ transform: none; }
 
-.chips{ display: flex; gap: 8px; }
+.chips{ display: flex; gap: var(--sp-2); }
 .chip{
   flex: 1 1 0;
   min-width: 0;
@@ -277,8 +300,8 @@ input[type="text"]:focus-visible{
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  border-radius: 12px;
+  gap: var(--sp-1);
+  border-radius: var(--r-sm);
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.05);
   color: rgba(255,255,255,.86);
@@ -300,7 +323,8 @@ input[type="text"]:focus-visible{
   font-size: 12px;
   color: var(--muted);
   line-height: 1.45;
-  padding-top: 2px;
+  padding-top: var(--sp-1);
+  min-height: 17px;   /* 无提示时也占位，避免卡片高度跳动 */
   overflow-wrap: anywhere;
 }
 
@@ -312,45 +336,46 @@ input[type="text"]:focus-visible{
 @media (max-width: 430px){
   .wrap{
     padding:
-      18px
-      max(12px, env(safe-area-inset-right))
-      max(22px, env(safe-area-inset-bottom))
-      max(12px, env(safe-area-inset-left));
+      var(--sp-4)
+      max(var(--sp-3), env(safe-area-inset-right))
+      var(--sp-4)
+      max(var(--sp-3), env(safe-area-inset-left));
+    padding-bottom: max(var(--sp-5), env(safe-area-inset-bottom));
   }
   /* 主操作留在输入行里，次要操作收成 3 列，避免 4 个全宽按钮把页面拉长 */
-  .row--primary{ flex-direction: row; align-items: stretch; gap: 8px; }
+  .row--primary{ flex-direction: row; align-items: stretch; gap: var(--sp-2); }
   .row--primary .btn.primary{ flex: 0 0 96px; width: 96px; }
   .row--actions{
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    gap: var(--sp-2);
     align-items: stretch;
   }
   .row--actions .btn{ width: 100%; min-width: 0; font-size: 13px; padding: 10px 4px; }
   /* 圆角同心：卡 22 − 内边距 16 ≈ 壳 12 */
-  .player-shell, #player .art-video-player{ border-radius: 12px; }
+  .player-shell, #player .art-video-player{ border-radius: var(--r-sm); }
 }
 @media (max-width: 360px){
   .brand h1{ font-size: 17px; }
-  .btn{ padding: 10px 8px; font-size: 13px; }
+  .btn{ padding: 10px var(--sp-2); font-size: 13px; }
 }
 
 
 /* 横屏小高度：让播放器与控制条都留在首屏内（不靠滚动） */
 @media (orientation: landscape) and (max-height: 520px){
-  .wrap{ padding-top: 8px; padding-bottom: 8px; }
-  .topbar{ margin-bottom: 6px; }
+  .wrap{ padding-top: var(--sp-2); padding-bottom: var(--sp-2); }
+  .topbar{ margin-bottom: var(--sp-1); }
   .brand p{ display: none; }
   /* 标题行在这里只占高度，按下播放的真实需求先让它 */
   .player-title{ display: none; }
-  .player-card{ padding: 8px; gap: 8px; }
+  .player-card{ padding: var(--sp-2); gap: var(--sp-2); }
   #player{
     width: auto;
     height: calc(100svh - 64px);
     max-height: calc(100svh - 64px);
     margin-inline: auto;
   }
-  .ctrl-card{ padding: 12px; }
+  .ctrl-card{ padding: var(--sp-3); }
 }
 
 /* 极老浏览器没有 aspect-ratio：用内边距占位，避免容器塌成 0 高 */
@@ -375,7 +400,7 @@ input[type="text"]:focus-visible{
    ArtPlayer 外观与可操作性
    ------------------------- */
 #player .art-video-player{
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   overflow: hidden;
   min-height: 0 !important;
 
@@ -431,7 +456,7 @@ input[type="text"]:focus-visible{
 
 /* 设置面板条目撑到 44px（面板高度由 JS 常量 SETTING_ITEM_HEIGHT 决定） */
 #player .art-setting-item{ min-height: var(--hit); padding: 8px 10px; }
-#player .art-settings{ border-radius: 14px; overflow: hidden; }
+#player .art-settings{ border-radius: var(--r-md); overflow: hidden; }
 
 /* 网页全屏：不依赖父级是否被裁切 */
 #player .art-video-player.art-fullscreen-web{
@@ -495,4 +520,44 @@ input[type="text"]:focus-visible{
 @media (max-width: 380px){
   #player .art-control-screenshot{ display: none !important; }
   #player .art-control-time{ font-size: 11px; }
+}
+
+/* -------------------------
+   页脚：一句话说明 + 两个入口，兼作视觉收束
+   ------------------------- */
+.foot{
+  margin-top: auto;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: rgba(255,255,255,.52);
+}
+.foot p{ margin: 0; }
+.foot nav{ display: flex; gap: var(--sp-4); }
+.foot a{
+  color: rgba(255,255,255,.72);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,.18);
+  padding-bottom: 1px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+.foot a:hover{ color: var(--accent); border-bottom-color: rgba(126,166,255,.6); }
+.foot a:focus-visible{ outline: 2px solid rgba(126,166,255,.9); outline-offset: 3px; }
+
+@media (max-width: 430px){
+  /* 手机上内容接近满屏，页脚紧跟内容即可，不用顶到底部拉出一段空白 */
+  .foot{
+    margin-top: var(--sp-5);
+    font-size: 11.5px;
+    gap: var(--sp-2);
+  }
+  .foot nav{ gap: var(--sp-3); }
+  .foot a{ min-height: 28px; }
 }

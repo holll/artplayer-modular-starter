@@ -29,7 +29,7 @@
         <h1>多格式在线播放</h1>
         <p>MP4 / HLS / FLV / DASH</p>
       </div>
-      <div class="badge badge--status" id="statusBadge" data-state="idle" aria-live="polite" aria-atomic="true">未加载</div>
+      <div class="badge badge--status" id="statusBadge" data-state="idle" aria-hidden="true">未加载</div>
     </header>
 
     <main class="layout" id="main-content">
@@ -48,7 +48,7 @@
               </svg>
             </div>
             <div class="t1">在下方粘贴视频地址</div>
-            <div class="t2">MP4 · HLS · FLV · DASH</div>
+            <div class="t2">粘贴后自动识别 · 支持跨域直链</div>
           </div>
         </div>
         <div class="hint" id="hintLine" role="status" aria-live="polite"></div>
@@ -73,6 +73,14 @@
         </div>
       </aside>
     </main>
+
+    <footer class="foot">
+      <p>纯前端播放 · 数据不出本机</p>
+      <nav aria-label="相关链接">
+        <a href="https://github.com/holll/artplayer-modular-starter/blob/main/docs/cors-playback.md" target="_blank" rel="noopener">跨域播放说明</a>
+        <a href="https://github.com/holll/artplayer-modular-starter" target="_blank" rel="noopener">源码</a>
+      </nav>
+    </footer>
   </div>
 
   <!-- defer：解析不被 155 KB 的播放器内核阻塞，模块脚本在它之后按文档顺序执行 -->
