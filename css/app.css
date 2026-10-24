@@ -6,13 +6,6 @@
   font-style: normal;
   font-display: swap;
 }
-@font-face{
-  font-family: "NotoSansSC";
-  src: url("../fonts/noto-sans-sc_5.2.10_latin-wght-normal.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
 
 /* Skip link: visually hidden until focused */
 .skip-link{
@@ -54,7 +47,7 @@
 html, body{ height: 100%; }
 body{
   margin:0;
-  font-family: "InterVar","NotoSansSC", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "InterVar", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
   color: var(--text);
   background:
     radial-gradient(1200px 600px at 10% 10%, rgba(92,136,255,.16), transparent 55%),

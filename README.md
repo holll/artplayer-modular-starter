@@ -113,8 +113,17 @@ Playback engines are loaded on demand by `js/engines.js`:
 
 | | Before | After |
 |---|---|---|
-| First load (HTML + CSS + JS + ArtPlayer) | ~1.54 MB | ~270 KB |
+| First load, decoded | ~1.54 MB (15 requests) | ~240 KB (12 requests) |
+| First load, over the wire (gzip) | — | ~105 KB |
 | HLS / FLV / DASH script | always downloaded | fetched only when that format is played (also prefetched 250 ms after you type a matching URL) |
+
+Details worth knowing:
+
+- Fonts are the largest single asset after ArtPlayer, so the page preloads the one variable font it actually uses (`fonts/inter_*.woff2`) and no longer ships a second Latin-only Noto Sans SC subset — Chinese text always came from the system font anyway.
+- The entry module and its static imports are `modulepreload`ed and `artplayer.js` is `defer`red, so parsing is not blocked by the 155 KB player core.
+- The DASH build is `dash.mediaplayer.min.js` (714 KB) instead of `dash.all.min.js` (775 KB): offline, DRM/protection and reporting modules are not needed to play a manifest.
+- `flv.js` runs with `enableWorker: false` — its worker build throws `Class extends value undefined` on some Chromium builds, which fails the whole stream. Demuxing on the main thread costs a little CPU but always works.
+- The progress bar has a 44 px touch target (10 px visual) while the rest of the control bar stays 48 px, so dragging on phones no longer misses.
 
 Two engine details worth knowing:
 

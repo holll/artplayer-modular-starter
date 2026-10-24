@@ -3,7 +3,7 @@
 const ENGINE_SRC = {
   hls: "vendors/hls.min.js",
   flv: "vendors/flv.min.js",
-  dash: "vendors/dash.all.min.js",
+  dash: "vendors/dash.mediaplayer.min.js", // 只要播放内核：去掉 offline/protection/reporting
 };
 
 const ENGINE_GLOBAL = {

@@ -110,8 +110,17 @@ setArtPlayerProxy(""); // 关闭
 
 | | 优化前 | 优化后 |
 |---|---|---|
-| 首屏（HTML + CSS + JS + ArtPlayer） | 约 1.54 MB | 约 270 KB |
+| 首屏（解压后体积） | 约 1.54 MB（15 个请求） | 约 240 KB（12 个请求） |
+| 首屏（gzip 传输量） | — | 约 105 KB |
 | HLS / FLV / DASH 引擎脚本 | 始终下载 | 播放对应格式时才下载；输入地址后 250 ms 也会静默预取 |
+
+其他细节：
+
+- 字体是 ArtPlayer 之后的第二大资源：现在只预加载真正使用的那一个可变字体（`fonts/inter_*.woff2`），并移除了只有拉丁字符的 Noto Sans SC 子集——中文本来就走系统字体。
+- 入口模块与其静态 import 用 `modulepreload` 预取，`artplayer.js` 加 `defer`，解析不再被 155 KB 的播放器内核阻塞。
+- DASH 改用 `dash.mediaplayer.min.js`（714 KB）替代 `dash.all.min.js`（775 KB）：离线、DRM/保护、上报模块对播放清单没有用处。
+- `flv.js` 使用 `enableWorker: false`——它的 worker 分支在部分 Chromium 构建上会抛 `Class extends value undefined`，导致整路流播放失败；解封装放回主线程只是多一点 CPU，但不会挂。
+- 进度条触控命中区 44px（视觉 10px），其余控制条仍为 48px，手机拖动不会再点不中。
 
 两个需要注意的引擎细节：
 

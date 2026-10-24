@@ -8,6 +8,17 @@
   <title>ArtPlayer 多格式在线播放</title>
   <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="./css/app.css" />
+  <!-- 关键字体提前握手：否则要等 CSS 解析完才发现字体，swap 期间会先闪系统字体 -->
+  <link rel="preload" href="./fonts/inter_5.2.6_latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <!-- 模块图预取：入口与它静态 import 的模块并行拉取，少一轮串行往返 -->
+  <link rel="modulepreload" href="./js/main.js" />
+  <link rel="modulepreload" href="./js/dom.js" />
+  <link rel="modulepreload" href="./js/utils.js" />
+  <link rel="modulepreload" href="./js/customTypes.js" />
+  <link rel="modulepreload" href="./js/engines.js" />
+  <link rel="modulepreload" href="./js/aspectRatio.js" />
+  <link rel="modulepreload" href="./js/liveDetect.js" />
+  <link rel="modulepreload" href="./js/mediaSession.js" />
 </head>
 <body>
   <a href="#main-content" class="skip-link">跳到主要内容</a>
@@ -54,7 +65,8 @@
     </main>
   </div>
 
-  <script src="./js/vendors/artplayer.js"></script>
+  <!-- defer：解析不被 155 KB 的播放器内核阻塞，模块脚本在它之后按文档顺序执行 -->
+  <script src="./js/vendors/artplayer.js" defer fetchpriority="high"></script>
   <!-- HLS / FLV / DASH 引擎由 js/engines.js 按需加载，首屏不再下载这 1.3 MB -->
   <script type="module" src="./js/main.js"></script>
 </body>
