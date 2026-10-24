@@ -131,6 +131,9 @@ function boot() {
     art.constructor.SETTING_ITEM_HEIGHT = 44;
   } catch (_) {}
 
+  // 首屏没有地址时 ready 不会触发，先补一次 role/tabindex，ready 里再兜底
+  enhanceControls(art);
+
   const { bindAspectSync } = createAspectSync(art);
   bindAspectSync();
 
@@ -153,8 +156,25 @@ function boot() {
   // -------------------------
   // Status
   // -------------------------
-  function toastStatus(text) {
+  const shell = document.querySelector(".player-shell");
+  const ACTION_IDS = ["stopBtn", "pipBtn", "shotBtn"];
+
+  // 没有视频时这三个按钮点了只会给出错误反馈，直接禁用
+  function setActionsEnabled(on) {
+    ACTION_IDS.forEach((id) => {
+      const btn = document.getElementById(id);
+      if (btn) btn.disabled = !on;
+    });
+  }
+
+  // 空态：隐藏 ArtPlayer 的 spinner / 控制条，改用引导层
+  function setEmpty(on) {
+    if (shell) shell.classList.toggle("is-empty", on);
+  }
+
+  function toastStatus(text, state = "ready") {
     setBadge(statusBadge, text);
+    if (statusBadge) statusBadge.dataset.state = state;
   }
 
   function announce(text) {
@@ -162,17 +182,18 @@ function boot() {
   }
 
   function reportError(text) {
-    toastStatus("播放错误");
+    toastStatus("播放错误", "error");
     announce(text);
     art.notice.show = text;
   }
 
   art.on("ready", () => {
-    toastStatus("就绪");
+    toastStatus("就绪", "ready");
     enhanceControls(art);
+    setActionsEnabled(true);
   });
   art.on("play", () => {
-    toastStatus("播放中");
+    toastStatus("播放中", "playing");
     if (!currentUrl) return;
     announce(
       isLiveStream
@@ -182,12 +203,27 @@ function boot() {
   });
   art.on("pause", () => {
     if (!currentUrl) return; // 已停止，不覆盖 toast
-    toastStatus("已暂停");
+    toastStatus("已暂停", "paused");
   });
-  art.on("error", () => reportError("加载失败：地址不可访问，或被跨域策略（CORS）拦截"));
+  art.on("error", () => {
+    setActionsEnabled(false);
+    reportError("加载失败：地址不可访问，或被跨域策略（CORS）拦截");
+  });
   art.on("destroy", () => teardownEngines(art));
   // 播放引擎（hls.js / flv.js / dash.js）的提示同步到页面状态行
   art.on("appMessage", (message) => announce(message));
+
+  // 读屏软件靠 aria-valuenow 感知进度，1s 同步一次就够
+  let ariaTick = 0;
+  art.on("video:timeupdate", () => {
+    const now = Math.floor(art.currentTime || 0);
+    if (now === ariaTick) return;
+    ariaTick = now;
+    const bar = art.query(".art-control-progress");
+    if (!bar) return;
+    bar.setAttribute("aria-valuemax", String(Math.round(art.duration || 0)));
+    bar.setAttribute("aria-valuenow", String(now));
+  });
 
   // -------------------------
   // Load URL
@@ -206,8 +242,10 @@ function boot() {
     currentUrl = url;
     currentType = inferType(url);
 
-    setBadge(typeBadge, "type: " + typeLabel(url, currentType));
-    toastStatus("加载中…");
+    setBadge(typeBadge, "类型 " + typeLabel(url, currentType));
+    setEmpty(false);
+    setActionsEnabled(false);
+    toastStatus("加载中…", "loading");
     announce(`正在加载 ${typeLabel(url, currentType)}`);
     art.notice.show = "";
 
@@ -229,8 +267,9 @@ function boot() {
       if (token !== loadToken) return; // 已被更新的加载取代，丢弃旧回调
       isLiveStream = detectLiveStream(currentType);
       const label = typeLabel(url, currentType);
-      const badgeText = isLiveStream ? `type: ${label} · LIVE` : `type: ${label}`;
+      const badgeText = isLiveStream ? `类型 ${label} · LIVE` : `类型 ${label}`;
       setBadge(typeBadge, badgeText);
+      setActionsEnabled(true);
       mediaSession.syncMetadata();
       if (isLiveStream) {
         announce("直播流：可拖动进度条回到已缓存片段");
@@ -273,9 +312,11 @@ function boot() {
     } catch (_) {
       // 同上
     }
-    toastStatus("已停止");
-    announce("已停止播放，可输入新地址或点击示例");
-    setBadge(typeBadge, "type: -");
+    setActionsEnabled(false);
+    setEmpty(true);
+    toastStatus("未加载", "idle");
+    announce("已停止播放，可输入新地址或点击下方示例");
+    setBadge(typeBadge, "类型 -");
     mediaSession.clear();
   });
 
@@ -307,7 +348,7 @@ function boot() {
     const url = urlInput.value.trim();
     if (!url) return;
     const type = inferType(url);
-    setBadge(typeBadge, `type: ${typeLabel(url, type)}`);
+    setBadge(typeBadge, `类型 ${typeLabel(url, type)}`);
 
     // 识别出 HLS/FLV/DASH 后静默预取引擎，点「播放」时就不用等脚本下载
     const engine = engineForType(type);
@@ -326,27 +367,18 @@ function boot() {
       const sub = String(preset.sub ?? "");
       const url = String(preset.url ?? "");
 
+      // 一行 4 个类型 chip：整块可点，不再额外挂「填充」胶囊
       const el = document.createElement("button");
       el.type = "button";
-      el.className = "item";
+      el.className = "chip";
+      el.title = sub || url;
+      el.setAttribute("aria-label", `填充 ${name}`);
 
-      const meta = document.createElement("span");
-      meta.className = "meta";
-
-      const nameEl = document.createElement("span");
-      nameEl.className = "name";
-      nameEl.textContent = name;
-
-      const subEl = document.createElement("span");
-      subEl.className = "sub";
-      subEl.textContent = sub;
-
-      const badge = document.createElement("span");
-      badge.className = "badge preset-badge";
-      badge.textContent = "填充";
-
-      meta.append(nameEl, subEl);
-      el.append(meta, badge);
+      const label = name.replace(/\s*示例$/, "");
+      el.append(document.createTextNode(label));
+      const em = document.createElement("em");
+      em.textContent = "示例";
+      el.append(em);
 
       el.addEventListener("click", () => {
         urlInput.value = url;
@@ -364,12 +396,12 @@ function boot() {
   let playingBeforeOffline = false;
   window.addEventListener("offline", () => {
     playingBeforeOffline = art.playing;
-    toastStatus("离线");
+    toastStatus("离线", "error");
     announce("网络已断开：播放会中断，恢复联网后自动尝试续播");
   });
   window.addEventListener("online", () => {
     if (!currentUrl) {
-      toastStatus("就绪");
+      toastStatus("就绪", "ready");
       announce("网络已恢复");
       return;
     }
@@ -379,15 +411,48 @@ function boot() {
     }
   });
 
-  toastStatus("未加载");
+  toastStatus("未加载", "idle");
 }
 
 function enhanceControls(art) {
   const controls = art.query(".art-controls");
   if (!controls) return;
 
+  // ArtPlayer 会在加载新源时重建控制条 DOM，重建后 role/tabindex 全丢，
+  // 用 MutationObserver 兜住（只监听子节点增删，开销可忽略）
+  if (controls.dataset.a11yWatched !== "1") {
+    controls.dataset.a11yWatched = "1";
+    const bottom = art.query(".art-bottom") || controls;
+    new MutationObserver(() => enhanceControls(art)).observe(bottom, { childList: true, subtree: true });
+  }
+
+  // 进度条挂在 .art-progress 里，不在 .art-controls 内，必须全局查
+  const progress = art.query(".art-control-progress");
+  if (progress && progress.dataset.a11yReady !== "1") {
+    progress.dataset.a11yReady = "1";
+    progress.setAttribute("role", "slider");
+    progress.setAttribute("tabindex", "0");
+    progress.setAttribute("aria-label", "播放进度");
+    progress.setAttribute("aria-valuemin", "0");
+    progress.setAttribute("aria-valuemax", String(Math.round(art.duration || 0)));
+    progress.setAttribute("aria-valuenow", String(Math.round(art.currentTime || 0)));
+    progress.addEventListener("keydown", (e) => {
+      const step = e.shiftKey ? 30 : 5;
+      if (e.key === "ArrowRight") { art.currentTime = Math.min(art.duration || 0, (art.currentTime || 0) + step); }
+      else if (e.key === "ArrowLeft") { art.currentTime = Math.max(0, (art.currentTime || 0) - step); }
+      else if (e.key === "Home") { art.currentTime = 0; }
+      else if (e.key === "End") { art.currentTime = art.duration || 0; }
+      else if (e.key === " " || e.key === "Enter") { art.toggle(); }
+      else return;
+      e.preventDefault();
+    });
+  }
+
   controls.querySelectorAll(".art-control").forEach((el) => {
     if (el.dataset.a11yReady === "1") return;
+    // 进度条已在上面按滑块处理，缩略图条只是画面预览，不需要键盘入口
+    if (el.classList.contains("art-control-progress")) return;
+    if (el.classList.contains("art-control-thumbnails")) return;
     el.dataset.a11yReady = "1";
     el.setAttribute("role", "button");
     el.setAttribute("tabindex", "0");

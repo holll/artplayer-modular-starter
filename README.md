@@ -13,8 +13,10 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 - 🎬 **ArtPlayer integration** with clean container sizing
 - 📦 **ES Module architecture** (no global pollution)
 - 🎨 **Glassmorphism UI** (modern, minimal)
-- ♿ **Accessibility built in** (keyboard-operable controls, ARIA labels, `prefers-reduced-motion`)
-- 📱 **Mobile-first layout** (44px touch targets, landscape & safe-area handling)
+- ♿ **Accessibility built in** (keyboard-operable controls, progress bar exposed as an ARIA slider, live status region, `prefers-reduced-motion`)
+- 📱 **Mobile-first layout** (44px touch targets, landscape & safe-area handling, control bar trimmed below 480 px so the fullscreen button never clips)
+- 🪟 **Honest empty state** — no fake spinner before a URL is pasted, and Stop/PiP/Screenshot stay disabled until something is loaded
+- 🧩 **One-line presets** — the four sample types are compact chips, so the whole page fits a 390×844 screen
 - 🔁 **Playback engine cleanup** (HLS / FLV / DASH are destroyed on switch — no leaks)
 - ⚠️ **Readable error handling** (CORS / 403 / network failures surface as plain text, not a spinner)
 - 🌐 **Optional proxy prefix** for CORS-blocked streams (`?proxy=`, see [docs/cors-playback.md](./docs/cors-playback.md))
