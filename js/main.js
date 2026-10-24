@@ -5,6 +5,8 @@ import { inferType, setBadge, typeLabel } from "./utils.js";
 import { playM3u8, playFlv, playMpd, teardownEngines } from "./customTypes.js";
 import { createAspectSync } from "./aspectRatio.js";
 import { createLiveDetector } from "./liveDetect.js";
+import { preloadEngine, engineForType } from "./engines.js";
+import { createMediaSession } from "./mediaSession.js";
 
 // 代理前缀只影响 MSE 类源（HLS/FLV/DASH），原生 <video src> 不需要它。
 const PROXY_STORAGE_KEY = "artplayer:proxy";
@@ -134,6 +136,20 @@ function boot() {
 
   const { detectLiveStream } = createLiveDetector(art);
 
+  // 锁屏/通知栏/耳机键：标题用「类型 + 域名」，避免只显示 hls.js 的地址
+  const mediaSession = createMediaSession(art, () => ({
+    title: currentUrl ? `${typeLabel(currentUrl, currentType)} 视频` : "多格式在线播放",
+    artist: hostOf(currentUrl) || "在线播放",
+  }));
+
+  function hostOf(url) {
+    try {
+      return new URL(url, location.href).host;
+    } catch (_) {
+      return "";
+    }
+  }
+
   // -------------------------
   // Status
   // -------------------------
@@ -184,6 +200,7 @@ function boot() {
 
   async function loadUrl(url) {
     const token = ++loadToken; // 本次加载的令牌
+    art.__loadToken = token; // 引擎懒加载回来后用它判断自己是否已过期
 
     teardownEngines(art);
     currentUrl = url;
@@ -214,6 +231,7 @@ function boot() {
       const label = typeLabel(url, currentType);
       const badgeText = isLiveStream ? `type: ${label} · LIVE` : `type: ${label}`;
       setBadge(typeBadge, badgeText);
+      mediaSession.syncMetadata();
       if (isLiveStream) {
         announce("直播流：可拖动进度条回到已缓存片段");
       } else if (art.playing) {
@@ -238,6 +256,7 @@ function boot() {
 
   $("#stopBtn").addEventListener("click", () => {
     loadToken += 1; // 让仍在路上的加载回调失效
+    art.__loadToken = loadToken;
     teardownEngines(art);
     currentUrl = "";
     currentType = "auto";
@@ -257,6 +276,7 @@ function boot() {
     toastStatus("已停止");
     announce("已停止播放，可输入新地址或点击示例");
     setBadge(typeBadge, "type: -");
+    mediaSession.clear();
   });
 
   $("#pipBtn").addEventListener("click", () => {
@@ -282,10 +302,18 @@ function boot() {
     if (e.key === "Enter") $("#playBtn").click();
   });
 
+  let preloadTimer = 0;
   urlInput.addEventListener("input", () => {
     const url = urlInput.value.trim();
     if (!url) return;
-    setBadge(typeBadge, `type: ${typeLabel(url, inferType(url))}`);
+    const type = inferType(url);
+    setBadge(typeBadge, `type: ${typeLabel(url, type)}`);
+
+    // 识别出 HLS/FLV/DASH 后静默预取引擎，点「播放」时就不用等脚本下载
+    const engine = engineForType(type);
+    if (!engine) return;
+    window.clearTimeout(preloadTimer);
+    preloadTimer = window.setTimeout(() => preloadEngine(engine), 250);
   });
 
   // -------------------------
@@ -330,6 +358,25 @@ function boot() {
 
       list.appendChild(el);
     });
+  });
+
+  // 断网/恢复：给出明确状态，恢复后自动续播（用户手动暂停过则不续）
+  let playingBeforeOffline = false;
+  window.addEventListener("offline", () => {
+    playingBeforeOffline = art.playing;
+    toastStatus("离线");
+    announce("网络已断开：播放会中断，恢复联网后自动尝试续播");
+  });
+  window.addEventListener("online", () => {
+    if (!currentUrl) {
+      toastStatus("就绪");
+      announce("网络已恢复");
+      return;
+    }
+    announce("网络已恢复，正在重新播放");
+    if (playingBeforeOffline) {
+      art.play().catch(() => announce("网络已恢复：点击画面重新播放"));
+    }
   });
 
   toastStatus("未加载");

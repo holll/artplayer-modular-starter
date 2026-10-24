@@ -16,6 +16,9 @@
 - 🔁 **播放引擎自动销毁**（HLS / FLV / DASH 切换时释放，不泄漏）
 - ⚠️ **可读的错误提示**（CORS / 403 / 网络异常以文字说明，而不是一直转圈）
 - 🌐 **可选代理前缀**，绕过跨域限制（`?proxy=`，详见 [docs/cors-playback.md](./docs/cors-playback.md)）
+- ⚡ **播放引擎按需加载**：HLS / FLV / DASH 只在用到时才下载，首屏从约 1.5 MB 降到约 270 KB
+- 🔒 **系统媒体控制**：锁屏 / 通知栏 / 耳机线控可播放、暂停、快进快退
+- 📶 **断网感知**：断网与恢复都有文字提示，恢复后自动续播
 
 ---
 
@@ -32,10 +35,12 @@
 │  ├─ dom.js             # DOM 工具
 │  ├─ utils.js           # 通用工具
 │  ├─ customTypes.js     # HLS/FLV/DASH 扩展
+│  ├─ engines.js         # HLS/FLV/DASH 引擎按需加载
+│  ├─ mediaSession.js    # 锁屏 / 线控接管
 │  ├─ aspectRatio.js     # 比例同步
 │  ├─ liveDetect.js      # 直播检测
 │  ├─ presets.json       # 示例地址配置
-│  └─ vendors/           # ArtPlayer 及播放依赖
+│  └─ vendors/           # ArtPlayer 及按需加载的播放依赖
 ├─ fonts/
 └─ favicon.ico
 ```
@@ -96,6 +101,22 @@ setArtPlayerProxy(""); // 关闭
 
 代理只作用于 **MSE 类**（`m3u8` / `flv` / `mpd`），MP4 直出保持原地址。
 完整方案（反代、Cloudflare Worker、Nginx、以及仍然无解的情况）：**[docs/cors-playback.md](./docs/cors-playback.md)**。
+
+---
+
+## ⚡ 性能说明
+
+播放引擎由 `js/engines.js` 按需加载：
+
+| | 优化前 | 优化后 |
+|---|---|---|
+| 首屏（HTML + CSS + JS + ArtPlayer） | 约 1.54 MB | 约 270 KB |
+| HLS / FLV / DASH 引擎脚本 | 始终下载 | 播放对应格式时才下载；输入地址后 250 ms 也会静默预取 |
+
+两个需要注意的引擎细节：
+
+- `flv.js` 使用 `enableWorker: false`——它的 worker 分支在部分 Chromium 构建上会抛 `Class extends value undefined`，导致整路流播放失败；解封装放回主线程只是多一点 CPU，但不会挂。
+- 进度条触控命中区 44px（视觉 10px），其余控制条仍为 48px，手机拖动不会再点不中。
 
 ---
 

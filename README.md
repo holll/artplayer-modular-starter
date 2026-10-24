@@ -18,6 +18,9 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 - 🔁 **Playback engine cleanup** (HLS / FLV / DASH are destroyed on switch — no leaks)
 - ⚠️ **Readable error handling** (CORS / 403 / network failures surface as plain text, not a spinner)
 - 🌐 **Optional proxy prefix** for CORS-blocked streams (`?proxy=`, see [docs/cors-playback.md](./docs/cors-playback.md))
+- ⚡ **On-demand playback engines** — HLS / FLV / DASH are lazy-loaded, first paint is ~270 KB instead of ~1.5 MB
+- 🔒 **Media Session support** — lock screen / notification / headset keys control playback
+- 📶 **Offline aware** — disconnects and reconnects surface as plain-text status and resume automatically
 
 ---
 
@@ -34,10 +37,12 @@ This project demonstrates how to organize an ArtPlayer-based video player using 
 │  ├─ dom.js             # DOM helpers
 │  ├─ utils.js           # Shared utils
 │  ├─ customTypes.js     # HLS/FLV/DASH hooks
+│  ├─ engines.js         # Lazy loader for HLS / FLV / DASH
+│  ├─ mediaSession.js    # Lock screen / headset key controls
 │  ├─ aspectRatio.js     # Aspect ratio sync
 │  ├─ liveDetect.js      # Live stream detection
 │  ├─ presets.json       # Demo URL presets
-│  └─ vendors/           # ArtPlayer + playback libs
+│  └─ vendors/           # ArtPlayer + lazily loaded playback libs
 ├─ fonts/
 └─ favicon.ico
 ```
@@ -99,6 +104,22 @@ setArtPlayerProxy(""); // disable
 
 The prefix only rewrites **MSE** sources (`m3u8` / `flv` / `mpd`); direct MP4 stays untouched.
 Full write-up (reverse proxy recipes, Cloudflare Worker, Nginx, what still cannot work): **[docs/cors-playback.md](./docs/cors-playback.md)**.
+
+---
+
+## ⚡ Performance notes
+
+Playback engines are loaded on demand by `js/engines.js`:
+
+| | Before | After |
+|---|---|---|
+| First load (HTML + CSS + JS + ArtPlayer) | ~1.54 MB | ~270 KB |
+| HLS / FLV / DASH script | always downloaded | fetched only when that format is played (also prefetched 250 ms after you type a matching URL) |
+
+Two engine details worth knowing:
+
+- `flv.js` runs with `enableWorker: false` — its worker build throws `Class extends value undefined` on some Chromium builds, which fails the whole stream. Demuxing on the main thread costs a little CPU but always works.
+- The progress bar has a 44 px touch target (10 px visual) while the rest of the control bar stays 48 px, so dragging on phones no longer misses.
 
 ---
 

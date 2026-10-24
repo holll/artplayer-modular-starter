@@ -1,5 +1,7 @@
 /* global Hls, flvjs, dashjs */
 
+import { loadEngine, isEngineLoaded, engineName } from "./engines.js";
+
 // 统一的引擎下线入口：切换地址、停止播放、实例销毁都走这里，
 // 避免 HLS ↔ MP4 切换时旧实例仍持有同一个 <video>（MSE 与原生 src 互相打架）。
 export function teardownEngines(art) {
@@ -33,8 +35,31 @@ function say(art, message) {
   }
 }
 
-export function playM3u8(video, url, art) {
+// loadUrl 每次都会自增 __loadToken；await 之后对不上说明用户已经切源或停止，
+// 此时不能再去 attach 引擎，否则会把新地址的 <video> 抢走。
+function isStale(art, token) {
+  return token !== undefined && token !== null && art.__loadToken !== token;
+}
+
+// 引擎是懒加载的：第一次用到才拉脚本，并在此期间给出「正在加载」提示。
+async function ensureEngine(art, kind, token) {
+  if (isEngineLoaded(kind)) return true;
+
+  say(art, `正在加载 ${engineName(kind)} 引擎…`);
+  try {
+    await loadEngine(kind);
+  } catch (_) {
+    if (!isStale(art, token)) say(art, `${engineName(kind)} 引擎加载失败，请检查网络后重试`);
+    return false;
+  }
+  return !isStale(art, token);
+}
+
+export async function playM3u8(video, url, art) {
   teardownEngines(art);
+  const token = art.__loadToken;
+
+  if (!(await ensureEngine(art, "hls", token))) return;
 
   // 优先 hls.js：只有它能做码率切换、错误恢复与统一错误提示。
   // 注意不能先判 canPlayType —— 部分 Chromium 构建会返回 "maybe"，
@@ -100,25 +125,31 @@ export function playM3u8(video, url, art) {
   hls.attachMedia(video);
 }
 
-export function playFlv(video, url, art) {
+export async function playFlv(video, url, art) {
   teardownEngines(art);
+  const token = art.__loadToken;
+
+  if (!(await ensureEngine(art, "flv", token))) return;
 
   if (!window.flvjs || !flvjs.isSupported()) {
     say(art, "当前浏览器不支持 FLV（flv.js 不可用或不支持）");
     return;
   }
 
+  // enableWorker 关掉：flv.js 1.6.2 的 worker 分支在部分 Chromium 构建里会抛
+  // "Class extends value undefined"，整个播放直接失败；关掉只是把解封装放回主线程。
   const flv = flvjs.createPlayer(
     { type: "flv", url },
-    { enableWorker: true, stashInitialSize: 128, lazyLoad: true }
+    { enableWorker: false, stashInitialSize: 128, lazyLoad: true }
   );
 
   art.__flv = flv;
 
   flv.on(flvjs.Events.ERROR, (type, detail) => {
-    const reason = detail === "NetworkError" || detail === "NetworkException"
-      ? "网络中断，或地址被跨域策略（CORS）拦截"
-      : `解码异常（${type}/${detail}）`;
+    const reason =
+      detail === "NetworkError" || detail === "NetworkException"
+        ? "网络中断，或地址被跨域策略（CORS）拦截"
+        : `解码异常（${type}/${detail}）`;
     say(art, `FLV 播放失败：${reason}`);
     teardownEngines(art);
   });
@@ -127,8 +158,11 @@ export function playFlv(video, url, art) {
   flv.load();
 }
 
-export function playMpd(video, url, art) {
+export async function playMpd(video, url, art) {
   teardownEngines(art);
+  const token = art.__loadToken;
+
+  if (!(await ensureEngine(art, "dash", token))) return;
 
   if (!window.dashjs) {
     say(art, "dash.js 未加载，无法播放 DASH");
